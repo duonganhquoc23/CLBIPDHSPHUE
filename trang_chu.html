@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Chủ - Quản trị CLB IP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #0f4c81; --primary-light: #2d73b3; --secondary: #f0f4f8; --text-main: #1e293b; --text-muted: #64748b; --bg: #f8fafc; --white: #ffffff; --border: #e2e8f0; --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); --danger: #ef4444; --success: #10b981; --warning: #f59e0b; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { display: flex; min-height: 100vh; background-color: var(--bg); color: var(--text-main); }
+        
+        .sidebar { width: 260px; background: var(--white); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-header { padding: 24px 20px; text-align: center; border-bottom: 1px solid var(--border); }
+        .sidebar-header h2 { color: var(--primary); font-size: 22px; font-weight: 700; }
+        .sidebar-menu { padding: 16px 12px; flex: 1; }
+        .sidebar-menu a { display: flex; align-items: center; gap: 12px; color: var(--text-muted); text-decoration: none; padding: 12px 16px; border-radius: 8px; margin-bottom: 4px; font-weight: 500; transition: all 0.2s; }
+        .sidebar-menu a:hover { background: var(--secondary); color: var(--primary); }
+        .sidebar-menu a.active { background: var(--primary); color: var(--white); box-shadow: 0 4px 6px -1px rgba(15, 76, 129, 0.2); }
+        .sidebar-menu a i { font-size: 18px; width: 24px; text-align: center; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; overflow-x: hidden; }
+        .top-navbar { background: var(--white); padding: 16px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+        .page-title { font-size: 20px; font-weight: 600; color: var(--text-main); }
+        
+        #fundWarning { display: none; background: #fef08a; color: #854d0e; padding: 12px 32px; font-weight: 500; font-size: 14px; align-items: center; gap: 8px; border-bottom: 1px solid #fde047; }
+        
+        .content-body { padding: 32px; flex: 1; max-width: 1200px; margin: 0 auto; width: 100%; }
+
+        /* Dashboard Stats */
+        .dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 32px; }
+        .stat-card { background: var(--white); padding: 24px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; align-items: center; gap: 20px; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-3px); }
+        .stat-icon { width: 60px; height: 60px; border-radius: 12px; background: var(--secondary); display: flex; justify-content: center; align-items: center; font-size: 24px; color: var(--primary); }
+        .stat-info h3 { font-size: 14px; color: var(--text-muted); font-weight: 500; margin-bottom: 4px; }
+        .stat-info .value { font-size: 28px; font-weight: 700; color: var(--text-main); }
+
+        /* 2-Column Layout */
+        .main-grid { display: grid; grid-template-columns: 6.5fr 3.5fr; gap: 32px; align-items: start; }
+        .feed-column { display: flex; flex-direction: column; }
+        .charts-column { display: flex; flex-direction: column; gap: 24px; }
+
+        /* Biểu đồ */
+        .chart-card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .chart-card h3 { font-size: 15px; margin-bottom: 15px; color: var(--text-main); font-weight: 600; }
+
+        /* Khu vực Đăng Bài */
+        .post-creator { background: var(--white); border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); padding: 20px; margin-bottom: 24px; }
+        .post-creator-header { display: flex; gap: 15px; margin-bottom: 15px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; flex-shrink: 0; }
+        .post-input { width: 100%; border: none; outline: none; font-size: 16px; resize: none; background: transparent; padding-top: 10px; color: var(--text-main); }
+        .post-input::placeholder { color: #94a3b8; }
+        
+        .post-actions { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 15px; }
+        .file-upload-btn { cursor: pointer; color: #10b981; font-weight: 500; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; transition: 0.2s; }
+        .file-upload-btn:hover { background: #dcfce7; }
+        #tep_dinh_kem { display: none; } 
+        
+        .btn { padding: 10px 24px; background: var(--primary); color: var(--white); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .btn:hover { background: var(--primary-light); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; transition: 0.2s; }
+        .btn-outline:hover { background: var(--secondary); }
+
+        /* Bảng Tin (Feed) */
+        .news-feed { display: flex; flex-direction: column; gap: 20px; }
+        .post-card { background: var(--white); border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); padding: 20px; position: relative; }
+        .post-card.pinned { border: 1px solid var(--warning); border-left: 4px solid var(--warning); background: #fffbeb; }
+        .post-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+        .post-header-left { display: flex; align-items: center; gap: 15px; }
+        .post-author { font-weight: 600; color: var(--text-main); font-size: 15px; }
+        .post-time { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+        
+        .post-options button { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 16px; padding: 4px 8px; border-radius: 4px; transition: 0.2s; }
+        .post-options button:hover { background: var(--secondary); color: var(--primary); }
+        .post-options .btn-delete:hover { color: var(--danger); }
+
+        .post-content { font-size: 15px; line-height: 1.6; color: var(--text-main); margin-bottom: 15px; white-space: pre-wrap; }
+        .post-image { width: 100%; max-height: 500px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); margin-top: 10px; }
+        .file-download-link { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--secondary); color: var(--primary); text-decoration: none; border-radius: 8px; font-weight: 500; border: 1px solid var(--border); transition: 0.2s; margin-top: 10px;}
+        .file-download-link:hover { background: #e2e8f0; }
+
+        /* Modals */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: var(--white); padding: 32px; border-radius: 16px; width: 450px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+        .modal-content.large { width: 800px; max-height: 85vh; display: flex; flex-direction: column; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-header h2 { font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px; }
+        .form-control { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 6px; outline: none; font-size: 14px; background: var(--white); }
+        .form-control:focus { border-color: var(--primary); }
+
+        .table-container { overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        th { background: #f8fafc; font-weight: 600; color: var(--text-muted); position: sticky; top: 0; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; white-space: nowrap; }
+        .badge-add { background: #dcfce7; color: #16a34a; }
+        .badge-edit { background: #e0f2fe; color: #0284c7; }
+        .badge-del { background: #fee2e2; color: #dc2626; }
+
+        .suggestion-item { padding: 15px; border-bottom: 1px solid var(--border); }
+        .suggestion-item:last-child { border-bottom: none; }
+        .suggestion-sender { font-weight: 600; color: var(--primary); margin-bottom: 5px; font-size: 14px;}
+        .suggestion-text { font-size: 14px; color: var(--text-main); line-height: 1.5; }
+
+        footer { padding: 20px; text-align: center; font-size: 13px; color: var(--text-muted); border-top: 1px solid var(--border); background: var(--white); margin-top: auto; line-height: 1.6; }
+        
+        @media (max-width: 992px) {
+            .main-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+            .sidebar-menu { display: flex; overflow-x: auto; padding: 10px; gap: 8px; }
+            .content-body { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header"><h2>CLB IP ADMIN</h2></div>
+        <div class="sidebar-menu">
+            <a href="trang_chu.html" class="active"><i class="fas fa-chart-pie"></i> Trang Chủ</a>
+            <a href="bcn/quan_ly_thanh_vien.html"><i class="fas fa-users"></i> Thành Viên</a>
+            <a href="bcn/quan_ly_quy.html"><i class="fas fa-wallet"></i> Quỹ CLB</a>
+            <a href="bcn/quan_ly_tai_lieu.html"><i class="fas fa-folder-open"></i> Tài Liệu</a>
+            <a href="bcn/quan_ly_ke_hoach.html"><i class="fas fa-calendar-alt"></i> Kế Hoạch</a>
+            <a href="bcn/quan_ly_diem_danh.html"><i class="fas fa-clipboard-check"></i> Điểm Danh</a>
+            <a href="bcn/quan_ly_bcn.html"><i class="fas fa-sitemap"></i> Ban Chủ Nhiệm</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- Navbar -->
+        <div class="top-navbar">
+            <h1 class="page-title">Trang Chủ & Bảng Điều Khiển</h1>
+            <button class="btn-outline" onclick="openSuggestions()" style="color: var(--primary); border-color: var(--primary);">
+                <i class="fas fa-envelope-open-text"></i> Hòm thư góp ý
+            </button>
+        </div>
+
+        <!-- Cảnh báo Quỹ tự động -->
+        <div id="fundWarning">
+            <i class="fas fa-exclamation-triangle"></i> Cảnh báo: Số dư quỹ CLB hiện đang dưới 200.000 VNĐ. Đề nghị Thủ quỹ và BCN dự trù kinh phí kịp thời!
+        </div>
+        
+        <div class="content-body">
+            <!-- Hàng 1: Thống kê Card -->
+            <div class="dashboard-cards">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    <div class="stat-info"><h3>Tổng Thành Viên</h3><div class="value" id="tong_tv">...</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#dcfce7; color:#16a34a;"><i class="fas fa-wallet"></i></div>
+                    <div class="stat-info"><h3>Số Dư Quỹ</h3><div class="value" id="so_du">...</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#e0f2fe; color:#0284c7;"><i class="fas fa-file-alt"></i></div>
+                    <div class="stat-info"><h3>Tổng Tài Liệu</h3><div class="value" id="tong_tl">...</div></div>
+                </div>
+            </div>
+
+            <!-- Hàng 2: Bảng Tin (Trái) & Biểu Đồ (Phải) -->
+            <div class="main-grid">
+                
+                <!-- CỘT TRÁI: ĐĂNG BÀI VÀ THÔNG BÁO -->
+                <div class="feed-column">
+                    <form id="postForm" class="post-creator">
+                        <div class="post-creator-header">
+                            <div class="avatar"><i class="fas fa-user-shield"></i></div>
+                            <textarea class="post-input" id="noi_dung" rows="3" placeholder="Bạn muốn thông báo hoặc chia sẻ điều gì cho CLB hôm nay?" required></textarea>
+                        </div>
+                        <div id="fileNameDisplay" style="font-size: 13px; color: var(--primary); margin: 5px 0 10px 55px; font-style: italic;"></div>
+                        
+                        <div class="post-actions">
+                            <label class="file-upload-btn">
+                                <i class="fas fa-paperclip"></i> Đính kèm tệp/ảnh
+                                <input type="file" id="tep_dinh_kem" name="tep_dinh_kem" onchange="showFileName(this)">
+                            </label>
+                            <button type="submit" class="btn">Đăng bài</button>
+                        </div>
+                    </form>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="font-size: 18px; color: var(--primary);">Thông Báo Gần Đây</h2>
+                        <button class="btn-outline" onclick="openHistoryModal()">
+                            <i class="fas fa-history"></i> Lịch sử bài viết
+                        </button>
+                    </div>
+
+                    <div class="news-feed" id="newsFeed">
+                        <!-- Data load từ API -->
+                    </div>
+                </div>
+
+                <!-- CỘT PHẢI: BIỂU ĐỒ THỐNG KÊ -->
+                <div class="charts-column">
+                    <div class="chart-card">
+                        <h3>Tỉ lệ Nam / Nữ</h3>
+                        <div style="height: 220px; display: flex; justify-content: center;"><canvas id="genderChart"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Phân bổ Thành viên theo Lớp (Top 5)</h3>
+                        <div style="height: 220px;"><canvas id="classChart"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Trạng thái Điểm danh chung</h3>
+                        <div style="height: 220px; display: flex; justify-content: center;"><canvas id="attendanceChart"></canvas></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <footer>
+            @2026 Bản quyền thuộc về CLB IP<br>Khoa Tin học - Trường Đại học Sư phạm Huế
+        </footer>
+    </div>
+
+    <!-- Modal Xác Thực BCN -->
+    <div class="modal" id="modalAuth">
+        <div class="modal-content" style="width: 420px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-shield-alt" style="color: var(--primary);"></i> Xác thực Quyền</h2>
+                <button class="close-btn" onclick="closeAuthModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="form-group">
+                <label>Chọn tư cách thành viên BCN để thao tác:</label>
+                <select class="form-control" id="bcnSelect">
+                    <option value="Dương Anh Quốc">Dương Anh Quốc (Chủ nhiệm)</option>
+                    <option value="Admin">Admin Hệ thống</option>
+                    <option value="Trưởng ban Chuyên môn">Trưởng ban Chuyên môn</option>
+                    <option value="Trưởng ban Truyền thông">Trưởng ban Truyền thông</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px;">
+                <button class="btn-outline" style="border:none;" onclick="closeAuthModal()">Hủy bỏ</button>
+                <button class="btn" onclick="confirmAuth()">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Chỉnh sửa bài viết -->
+    <div class="modal" id="modalEditPost">
+        <div class="modal-content" style="width: 500px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit" style="color: var(--primary);"></i> Sửa Thông Báo</h2>
+                <button class="close-btn" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="form-group">
+                <label>Nội dung mới:</label>
+                <textarea class="form-control" id="editPostContent" rows="6"></textarea>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+                <button class="btn-outline" style="border:none;" onclick="closeEditModal()">Hủy bỏ</button>
+                <button class="btn" onclick="confirmEdit()">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Lịch sử thao tác -->
+    <div class="modal" id="modalHistory">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2><i class="fas fa-history" style="color: var(--primary);"></i> Lịch Sử Thao Tác Bài Viết</h2>
+                <button class="close-btn" onclick="closeHistoryModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="table-container" style="flex: 1;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 150px;">Thời gian</th>
+                            <th style="width: 150px;">BCN thao tác</th>
+                            <th style="width: 100px;">Hành động</th>
+                            <th>Nội dung / Ghi chú</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <!-- Load dữ liệu lịch sử -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Hòm Thư Góp Ý -->
+    <div class="modal" id="modalSuggestions">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2><i class="fas fa-envelope" style="color: var(--primary);"></i> Hòm Thư Góp Ý (Từ Thành viên)</h2>
+                <button class="close-btn" onclick="closeSuggestions()"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="suggestionList" style="max-height: 400px; overflow-y: auto; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);">
+                <!-- Load góp ý vào đây -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- QUẢN LÝ PROMISES CHO MODAL XÁC THỰC ---
+        let authResolve = null;
+        let editResolve = null;
+
+        function requestAuth() {
+            document.getElementById('modalAuth').style.display = 'flex';
+            return new Promise((resolve) => {
+                authResolve = resolve;
+            });
+        }
+
+        function closeAuthModal() {
+            document.getElementById('modalAuth').style.display = 'none';
+            if (authResolve) authResolve(null);
+        }
+
+        function confirmAuth() {
+            const selectedMember = document.getElementById('bcnSelect').value;
+            document.getElementById('modalAuth').style.display = 'none';
+            if (authResolve) authResolve(selectedMember);
+        }
+
+        function requestEditContent(oldContent) {
+            document.getElementById('editPostContent').value = oldContent;
+            document.getElementById('modalEditPost').style.display = 'flex';
+            return new Promise((resolve) => {
+                editResolve = resolve;
+            });
+        }
+
+        function closeEditModal() {
+            document.getElementById('modalEditPost').style.display = 'none';
+            if (editResolve) editResolve(null);
+        }
+
+        function confirmEdit() {
+            const newContent = document.getElementById('editPostContent').value;
+            document.getElementById('modalEditPost').style.display = 'none';
+            if (editResolve) editResolve(newContent);
+        }
+
+        // Load Thống kê chung & Kiểm tra cảnh báo Quỹ
+        async function loadDashboard() {
+            try {
+                const response = await fetch('http://localhost:3000/api/dashboard');
+                const data = await response.json();
+                document.getElementById('tong_tv').innerText = data.tongThanhVien;
+                document.getElementById('so_du').innerText = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(data.soDuQuy);
+                document.getElementById('tong_tl').innerText = data.tongTaiLieu;
+
+                if (data.soDuQuy < 200000) {
+                    document.getElementById('fundWarning').style.display = 'flex';
+                } else {
+                    document.getElementById('fundWarning').style.display = 'none';
+                }
+            } catch (error) { console.error("Lỗi:", error); }
+        }
+
+        // Tải Dữ Liệu Biểu Đồ
+        async function loadCharts() {
+            try {
+                const res = await fetch('http://localhost:3000/api/analytics');
+                const data = await res.json();
+                
+                new Chart(document.getElementById('genderChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.gender.map(d => d.gioi_tinh),
+                        datasets: [{ data: data.gender.map(d => d.count), backgroundColor: ['#3b82f6', '#ec4899'] }]
+                    },
+                    options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                });
+
+                new Chart(document.getElementById('classChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.classes.map(d => d.lop),
+                        datasets: [{ label: 'Số lượng Sinh viên', data: data.classes.map(d => d.count), backgroundColor: '#0ea5e9' }]
+                    },
+                    options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+
+                new Chart(document.getElementById('attendanceChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: data.attendance.map(d => d.trang_thai),
+                        datasets: [{ data: data.attendance.map(d => d.count), backgroundColor: ['#10b981', '#ef4444', '#f59e0b', '#94a3b8'] }]
+                    },
+                    options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+                });
+            } catch(e) { console.error("Lỗi vẽ biểu đồ:", e); }
+        }
+
+        function timeAgo(dateString) {
+            const date = new Date(dateString);
+            const seconds = Math.floor((new Date() - date) / 1000);
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + " năm trước";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + " tháng trước";
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + " ngày trước";
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + " giờ trước";
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + " phút trước";
+            return "Vừa xong";
+        }
+
+        async function loadPosts() {
+            try {
+                const response = await fetch('http://localhost:3000/api/posts');
+                const data = await response.json();
+                const feed = document.getElementById('newsFeed');
+                feed.innerHTML = '';
+                
+                data.forEach(post => {
+                    let attachmentHTML = '';
+                    if (post.tep_url) {
+                        if (post.tep_url.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null) {
+                            attachmentHTML = `<img src="http://localhost:3000${post.tep_url}" class="post-image" alt="Hình ảnh đính kèm">`;
+                        } else {
+                            const fileName = post.tep_url.split('/').pop();
+                            attachmentHTML = `<br><a href="http://localhost:3000${post.tep_url}" target="_blank" class="file-download-link"><i class="fas fa-file-download"></i> Tải xuống: ${fileName}</a>`;
+                        }
+                    }
+                    
+                    const safeContent = post.noi_dung.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    
+                    const isPinned = post.is_pinned === 1;
+                    const pinColor = isPinned ? 'color: #f59e0b;' : 'color: #94a3b8;';
+                    const pinTitle = isPinned ? 'Bỏ ghim' : 'Ghim bài';
+                    const pinnedBadge = isPinned ? `<span style="background:#fef3c7; color:#d97706; padding:2px 8px; border-radius:12px; font-size:12px; font-weight:600; margin-bottom:10px; display:inline-block;"><i class="fas fa-thumbtack"></i> Đã ghim trên đầu</span>` : '';
+
+                    feed.innerHTML += `
+                        <div class="post-card ${isPinned ? 'pinned' : ''}">
+                            ${pinnedBadge}
+                            <div class="post-header">
+                                <div class="post-header-left">
+                                    <div class="avatar"><i class="fas fa-bullhorn"></i></div>
+                                    <div>
+                                        <div class="post-author">Ban Chủ Nhiệm CLB IP</div>
+                                        <div class="post-time">${timeAgo(post.ngay_dang)}</div>
+                                    </div>
+                                </div>
+                                <div class="post-options">
+                                    <button onclick="togglePin(${post.id})" title="${pinTitle}" style="${pinColor}"><i class="fas fa-thumbtack"></i></button>
+                                    <button onclick="editPost(${post.id}, '${safeContent}')" title="Sửa thông báo"><i class="fas fa-edit"></i></button>
+                                    <button onclick="deletePost(${post.id})" class="btn-delete" title="Xóa thông báo"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="post-content">${post.noi_dung}</div>
+                            ${attachmentHTML}
+                        </div>
+                    `;
+                });
+            } catch (error) { console.error("Lỗi load bài viết:", error); }
+        }
+
+        async function togglePin(id) {
+            try {
+                await fetch(`http://localhost:3000/api/posts/${id}/pin`, { method: 'PATCH' });
+                loadPosts();
+            } catch (e) { alert("Lỗi khi ghim bài!"); }
+        }
+
+        document.getElementById('postForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const bcnMember = await requestAuth(); 
+            if (!bcnMember) return;
+
+            const formData = new FormData();
+            formData.append('noi_dung', document.getElementById('noi_dung').value);
+            formData.append('nguoi_thao_tac', bcnMember);
+            
+            const tepInput = document.getElementById('tep_dinh_kem');
+            if (tepInput.files.length > 0) {
+                formData.append('tep_dinh_kem', tepInput.files[0]);
+            }
+
+            try {
+                await fetch('http://localhost:3000/api/posts', { method: 'POST', body: formData });
+                document.getElementById('postForm').reset();
+                document.getElementById('fileNameDisplay').innerText = '';
+                loadPosts(); 
+            } catch (error) { alert("Có lỗi khi đăng bài!"); }
+        });
+
+        async function editPost(id, oldContent) {
+            const bcnMember = await requestAuth();
+            if (!bcnMember) return;
+
+            const newContent = await requestEditContent(oldContent);
+            if (newContent && newContent.trim() !== "" && newContent !== oldContent) {
+                try {
+                    const res = await fetch(`http://localhost:3000/api/posts/${id}`, { 
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ noi_dung: newContent.trim(), nguoi_thao_tac: bcnMember })
+                    });
+                    if(res.ok) loadPosts();
+                    else alert("Lỗi từ máy chủ khi cập nhật.");
+                } catch (error) { alert("Có lỗi xảy ra khi cập nhật bài viết!"); }
+            }
+        }
+
+        async function deletePost(id) {
+            const bcnMember = await requestAuth();
+            if (!bcnMember) return;
+            
+            if (confirm(`Bạn xác nhận xóa thông báo này? Hành động này sẽ được ghi vào lịch sử.`)) {
+                try {
+                    const res = await fetch(`http://localhost:3000/api/posts/${id}?nguoi_thao_tac=${encodeURIComponent(bcnMember)}`, { 
+                        method: 'DELETE' 
+                    });
+                    if(res.ok) loadPosts();
+                    else alert("Lỗi từ máy chủ khi xóa bài viết.");
+                } catch (error) { alert("Không thể kết nối đến máy chủ!"); }
+            }
+        }
+
+        // --- XỬ LÝ HIỂN THỊ LỊCH SỬ BÀI VIẾT ---
+        function openHistoryModal() {
+            document.getElementById('modalHistory').style.display = 'flex';
+            loadHistory();
+        }
+        function closeHistoryModal() {
+            document.getElementById('modalHistory').style.display = 'none';
+        }
+
+        async function loadHistory() {
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Đang tải dữ liệu...</td></tr>';
+            try {
+                const response = await fetch('http://localhost:3000/api/posts/history');
+                const historyData = await response.json();
+                tbody.innerHTML = '';
+                
+                if (historyData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">Chưa có lịch sử hoạt động.</td></tr>';
+                    return;
+                }
+
+                historyData.forEach(item => {
+                    let badgeClass = '';
+                    if(item.hanh_dong === 'Thêm') badgeClass = 'badge-add';
+                    if(item.hanh_dong === 'Sửa') badgeClass = 'badge-edit';
+                    if(item.hanh_dong === 'Xóa') badgeClass = 'badge-del';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${new Date(item.thoi_gian).toLocaleString('vi-VN')}</td>
+                            <td><b>${item.nguoi_thao_tac}</b></td>
+                            <td><span class="badge ${badgeClass}">${item.hanh_dong}</span></td>
+                            <td><div style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.noi_dung || ''}</div></td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#ef4444;">Lỗi khi tải lịch sử.</td></tr>';
+            }
+        }
+
+        // --- XỬ LÝ HÒM THƯ GÓP Ý ---
+        async function openSuggestions() {
+            document.getElementById('modalSuggestions').style.display = 'flex';
+            const box = document.getElementById('suggestionList');
+            box.innerHTML = '<div style="padding: 20px; text-align: center;">Đang tải dữ liệu...</div>';
+            try {
+                const res = await fetch('http://localhost:3000/api/suggestions');
+                const data = await res.json();
+                if(data.length === 0) {
+                    box.innerHTML = '<div style="padding: 20px; text-align: center; color: gray;">Chưa có góp ý nào từ thành viên.</div>';
+                    return;
+                }
+                box.innerHTML = data.map(item => `
+                    <div class="suggestion-item">
+                        <div class="suggestion-sender">
+                            <i class="fas fa-user-circle"></i> ${item.nguoi_gui} 
+                            <span style="color:gray; font-size:12px; font-weight:normal; margin-left:10px;">
+                                ${new Date(item.ngay_gui).toLocaleString('vi-VN')}
+                            </span>
+                        </div>
+                        <div class="suggestion-text">${item.noi_dung}</div>
+                    </div>
+                `).join('');
+            } catch(e) {
+                box.innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Lỗi tải hòm thư.</div>';
+            }
+        }
+
+        function closeSuggestions() { 
+            document.getElementById('modalSuggestions').style.display = 'none'; 
+        }
+
+        function showFileName(input) {
+            const display = document.getElementById('fileNameDisplay');
+            if(input.files && input.files.length > 0) {
+                display.innerText = "Đã đính kèm: " + input.files[0].name;
+            } else { display.innerText = ""; }
+        }
+
+        window.onload = () => {
+            loadDashboard();
+            loadCharts();
+            loadPosts();
+        };
+    </script>
+</body>
+</html>

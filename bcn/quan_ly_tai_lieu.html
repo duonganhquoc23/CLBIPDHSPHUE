@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Tài Liệu - CLB IP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root { --primary: #0f4c81; --primary-light: #2d73b3; --secondary: #f0f4f8; --text-main: #1e293b; --text-muted: #64748b; --bg: #f8fafc; --white: #ffffff; --border: #e2e8f0; --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); --danger: #ef4444; --success: #10b981; --info: #0ea5e9; --warning: #f59e0b; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { display: flex; min-height: 100vh; background-color: var(--bg); color: var(--text-main); }
+        
+        .sidebar { width: 260px; background: var(--white); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .sidebar-header { padding: 24px 20px; text-align: center; border-bottom: 1px solid var(--border); }
+        .sidebar-header h2 { color: var(--primary); font-size: 22px; font-weight: 700; }
+        .sidebar-menu { padding: 16px 12px; flex: 1; }
+        .sidebar-menu a { display: flex; align-items: center; gap: 12px; color: var(--text-muted); text-decoration: none; padding: 12px 16px; border-radius: 8px; margin-bottom: 4px; font-weight: 500; transition: all 0.2s; }
+        .sidebar-menu a:hover { background: var(--secondary); color: var(--primary); }
+        .sidebar-menu a.active { background: var(--primary); color: var(--white); box-shadow: 0 4px 6px -1px rgba(15, 76, 129, 0.2); }
+        .sidebar-menu a i { font-size: 18px; width: 24px; text-align: center; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
+        .top-navbar { background: var(--white); padding: 16px 32px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+        .page-title { font-size: 20px; font-weight: 600; }
+        .content-body { padding: 32px; flex: 1; }
+
+        .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
+        .filter-group { display: flex; gap: 12px; flex: 1; }
+        .search-box { position: relative; width: 300px; }
+        .search-box i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+        .search-box input { width: 100%; padding: 10px 14px 10px 40px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; transition: border 0.2s; }
+        .search-box input:focus { border-color: var(--primary); }
+        
+        .filter-select { padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; background: var(--white); cursor: pointer; }
+
+        .btn-group { display: flex; gap: 10px; align-items: center; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: var(--primary); color: var(--white); border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s; text-decoration: none; font-size: 14px;}
+        .btn:hover { background: var(--primary-light); transform: translateY(-1px); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        .btn-outline:hover { background: var(--secondary); }
+        .btn-danger { background: var(--danger); padding: 6px 12px; font-size: 13px; color: #fff;}
+        .btn-danger:hover { background: #dc2626; color: #fff; }
+        .btn-info { background: var(--info); padding: 6px 12px; font-size: 13px; color: #fff;}
+        .btn-info:hover { background: #0284c7; color: #fff; }
+        .btn-success { background: var(--success); }
+        .btn-success:hover { background: #059669; }
+        .btn-warning { background: var(--warning); }
+        .btn-warning:hover { background: #d97706; }
+
+        .table-container { background: var(--white); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        th { background: #f8fafc; font-weight: 600; color: var(--text-muted); font-size: 13px; text-transform: uppercase; }
+        td { font-size: 14px; vertical-align: middle; }
+        
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; white-space: nowrap; }
+        .badge-tag { background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: var(--white); padding: 32px; border-radius: 16px; width: 450px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+        
+        /* Cập nhật class cho Modal Preview lớn hơn */
+        .modal-content.large-preview { width: 85%; max-width: 1000px; height: 85vh; display: flex; flex-direction: column; padding: 24px; }
+        .preview-container { flex: 1; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #f1f5f9; display: flex; align-items: center; justify-content: center; }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px; }
+        .form-control { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 6px; outline: none; }
+        .form-control:focus { border-color: var(--primary); }
+        .help-text { font-size: 12px; color: var(--text-muted); margin-top: 4px; display: block; }
+
+        footer { padding: 20px; text-align: center; font-size: 13px; color: var(--text-muted); border-top: 1px solid var(--border); background: var(--white); margin-top: auto; line-height: 1.6; }
+        
+        @media (max-width: 768px) { body { flex-direction: column; } .sidebar { width: 100%; height: auto; border-bottom: 1px solid var(--border); } .sidebar-menu { display: flex; overflow-x: auto; } .table-container { overflow-x: auto; } }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header"><h2>CLB IP ADMIN</h2></div>
+        <div class="sidebar-menu">
+            <a href="../trang_chu.html"><i class="fas fa-chart-pie"></i> Trang Chủ</a>
+            <a href="quan_ly_thanh_vien.html"><i class="fas fa-users"></i> Thành Viên</a>
+            <a href="quan_ly_quy.html"><i class="fas fa-wallet"></i> Quỹ CLB</a>
+            <a href="quan_ly_tai_lieu.html" class="active"><i class="fas fa-folder-open"></i> Tài Liệu</a>
+            <a href="quan_ly_ke_hoach.html"><i class="fas fa-calendar-alt"></i> Kế Hoạch</a>
+            <a href="quan_ly_diem_danh.html"><i class="fas fa-clipboard-check"></i> Điểm Danh</a>
+            <a href="quan_ly_bcn.html"><i class="fas fa-sitemap"></i> Ban Chủ Nhiệm</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-navbar"><h1 class="page-title">Kho Tài Liệu CLB</h1></div>
+        
+        <div class="content-body">
+            <div class="action-bar">
+                <div class="filter-group">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Tìm tên tài liệu, mô tả..." onkeyup="filterDocs()">
+                    </div>
+                    <select class="filter-select" id="filterNhom" onchange="filterDocs()">
+                        <option value="All">Tất cả danh mục</option>
+                        <option value="Chuyên môn">Chuyên môn</option>
+                        <option value="Nghiệp vụ">Nghiệp vụ</option>
+                        <option value="Kỹ năng">Kỹ năng</option>
+                    </select>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-warning" id="btnLockToggle" onclick="toggleDataLock()">
+                        <i class="fas fa-unlock"></i> Đang mở khóa
+                    </button>
+                    
+                    <div id="editableActions" style="display: flex; gap: 10px;">
+                        <button class="btn" onclick="openDocModal()">
+                            <i class="fas fa-cloud-upload-alt"></i> Tải Lên Tài Liệu
+                        </button>
+                    </div>
+
+                    <button class="btn btn-success" onclick="exportToExcel()">
+                        <i class="fas fa-file-export"></i> Xuất Excel
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="min-width: 140px;">Nhóm</th>
+                            <th>Tên Tài liệu</th>
+                            <th>Mô tả</th>
+                            <th>Ngày tải lên</th>
+                            <th style="min-width: 320px;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="docTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer>
+            @2026 Bản quyền thuộc về CLB IP<br>Khoa Tin học - Trường Đại học Sư phạm Huế
+        </footer>
+    </div>
+
+    <!-- Modal Tải Lên/Sửa -->
+    <div class="modal" id="modalDoc">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Tải Lên Tài Liệu</h2>
+                <button class="close-btn" onclick="closeDocModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="docForm" enctype="multipart/form-data">
+                <div class="form-group"><label>Phân loại</label>
+                    <select class="form-control" name="nhom" id="nhom" required>
+                        <option value="Chuyên môn">Chuyên môn</option>
+                        <option value="Nghiệp vụ">Nghiệp vụ</option>
+                        <option value="Kỹ năng">Kỹ năng</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Tên tài liệu</label><input type="text" class="form-control" name="ten_tai_lieu" id="ten_tai_lieu" required></div>
+                <div class="form-group"><label>Mô tả ngắn</label><textarea class="form-control" name="mo_ta" id="mo_ta" rows="2"></textarea></div>
+                <div class="form-group">
+                    <label>Chọn file tải lên</label>
+                    <input type="file" class="form-control" name="file" id="file_upload" required>
+                    <span class="help-text" id="fileHelpText" style="display: none;">Để trống nếu không muốn thay đổi file hiện tại.</span>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Lưu Tài Liệu</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Xem Trước (Preview) -->
+    <div class="modal" id="modalPreview">
+        <div class="modal-content large-preview">
+            <div class="modal-header" style="margin-bottom: 12px;">
+                <h2 id="previewTitle" style="font-size: 18px;"><i class="fas fa-eye"></i> Xem Trước Tài Liệu</h2>
+                <button class="close-btn" onclick="document.getElementById('modalPreview').style.display='none'"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="preview-container" id="previewContainer">
+                <!-- Chứa iframe hoặc img -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api/documents';
+        let allDocs = [];
+        let currentEditId = null;
+        
+        let isDataLocked = localStorage.getItem('isAppLocked') === 'true';
+
+        async function loadDocs() {
+            try {
+                const res = await fetch(API_URL);
+                allDocs = await res.json();
+                renderTable(allDocs);
+            } catch (error) { console.error("Lỗi khi tải dữ liệu:", error); }
+        }
+
+        function applyLockState() {
+            const btnLock = document.getElementById('btnLockToggle');
+            const editableActions = document.getElementById('editableActions');
+            if (isDataLocked) {
+                btnLock.innerHTML = '<i class="fas fa-lock"></i> Đã khóa dữ liệu';
+                btnLock.style.background = '#ef4444';
+                if (editableActions) editableActions.style.display = 'none';
+            } else {
+                btnLock.innerHTML = '<i class="fas fa-unlock"></i> Đang mở khóa';
+                btnLock.style.background = '#f59e0b';
+                if (editableActions) editableActions.style.display = 'flex';
+            }
+        }
+
+        function toggleDataLock() {
+            isDataLocked = !isDataLocked;
+            localStorage.setItem('isAppLocked', isDataLocked); 
+            applyLockState(); filterDocs(); 
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('docTable');
+            tbody.innerHTML = '';
+            data.forEach(item => {
+                const dateStr = item.ngay_tao ? new Date(item.ngay_tao).toLocaleDateString('vi-VN') : 'N/A';
+                const fileExt = item.file_path ? item.file_path.split('.').pop().toLowerCase() : '';
+                const canPreview = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
+
+                const fileUrl = `http://localhost:3000${item.file_path}`;
+                let previewBtn = canPreview ? 
+                    `<button class="btn btn-outline" style="padding: 6px 12px; font-size: 13px;" onclick="previewFile('${fileUrl}', '${fileExt}', '${item.ten_tai_lieu}')"><i class="fas fa-eye"></i> Xem trước</button>` 
+                    : '';
+
+                let actionBtns = '';
+                const btnDownload = `
+                    <a href="${fileUrl}" target="_blank" class="btn btn-outline" style="padding: 6px 12px; font-size: 13px; color: var(--primary);">
+                        <i class="fas fa-download"></i> Tải về
+                    </a>
+                `;
+
+                if (isDataLocked) {
+                    actionBtns = `
+                        ${btnDownload}
+                        ${previewBtn}
+                        <span style="color: #94a3b8; font-size: 13px; margin-left: 10px;"><i class="fas fa-lock"></i> Đã khóa</span>
+                    `;
+                } else {
+                    actionBtns = `
+                        ${btnDownload}
+                        ${previewBtn}
+                        <button class="btn btn-info" onclick="openDocModal(${item.id})"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-danger" onclick="deleteDoc(${item.id})"><i class="fas fa-trash"></i></button>
+                    `;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="badge badge-tag"><i class="fas fa-tag"></i> ${item.nhom}</span></td>
+                        <td><b>${item.ten_tai_lieu}</b></td>
+                        <td>${item.mo_ta || ''}</td>
+                        <td>${dateStr}</td>
+                        <td>
+                            <div style="display: flex; gap: 6px; align-items: center;">
+                                ${actionBtns}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Logic Xem trước File
+        function previewFile(url, ext, name) {
+            document.getElementById('previewTitle').innerHTML = `<i class="fas fa-eye"></i> Xem Trước: ${name}`;
+            const container = document.getElementById('previewContainer');
+            
+            if (ext === 'pdf') {
+                container.innerHTML = `<iframe src="${url}" width="100%" height="100%" style="border:none;"></iframe>`;
+            } else {
+                container.innerHTML = `<img src="${url}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+            }
+            
+            document.getElementById('modalPreview').style.display = 'flex';
+        }
+
+        function filterDocs() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('filterNhom').value;
+            const filteredData = allDocs.filter(doc => {
+                const matchKeyword = (doc.ten_tai_lieu && doc.ten_tai_lieu.toLowerCase().includes(keyword)) || 
+                                     (doc.mo_ta && doc.mo_ta.toLowerCase().includes(keyword));
+                const matchCategory = category === 'All' || doc.nhom === category;
+                return matchKeyword && matchCategory;
+            });
+            renderTable(filteredData);
+        }
+
+        function exportToExcel() {
+            if (allDocs.length === 0) return alert("Không có dữ liệu để xuất!");
+            const dataToExport = allDocs.map(doc => ({
+                "Nhóm": doc.nhom, "Tên Tài Liệu": doc.ten_tai_lieu, "Mô Tả": doc.mo_ta,
+                "Ngày Tải Lên": doc.ngay_tao ? new Date(doc.ngay_tao).toLocaleDateString('vi-VN') : '',
+                "Đường Dẫn File": `http://localhost:3000${doc.file_path}`
+            }));
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Tai_Lieu");
+            XLSX.writeFile(workbook, "Danh_sach_tai_lieu_CLB.xlsx");
+        }
+
+        function openDocModal(id = null) {
+            currentEditId = id;
+            const modal = document.getElementById('modalDoc');
+            const form = document.getElementById('docForm');
+            const title = document.getElementById('modalTitle');
+            const fileInput = document.getElementById('file_upload');
+            const fileHelpText = document.getElementById('fileHelpText');
+
+            form.reset();
+            if (id === null) {
+                title.innerText = "Tải Lên Tài Liệu Mới";
+                fileInput.required = true; fileHelpText.style.display = 'none';
+            } else {
+                title.innerText = "Cập Nhật Tài Liệu";
+                fileInput.required = false; fileHelpText.style.display = 'block';
+                const doc = allDocs.find(d => d.id === id);
+                if (doc) {
+                    document.getElementById('nhom').value = doc.nhom;
+                    document.getElementById('ten_tai_lieu').value = doc.ten_tai_lieu;
+                    document.getElementById('mo_ta').value = doc.mo_ta || '';
+                }
+            }
+            modal.style.display = 'flex';
+        }
+
+        function closeDocModal() {
+            document.getElementById('modalDoc').style.display = 'none';
+            document.getElementById('docForm').reset();
+            currentEditId = null;
+        }
+
+        document.getElementById('docForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formElement = document.getElementById('docForm');
+            const formData = new FormData(formElement);
+
+            try {
+                if (currentEditId === null) {
+                    await fetch(API_URL, { method: 'POST', body: formData });
+                } else {
+                    await fetch(`${API_URL}/${currentEditId}`, { method: 'PUT', body: formData });
+                }
+                closeDocModal(); loadDocs();
+            } catch (error) { alert("Đã xảy ra lỗi trong quá trình lưu!"); }
+        });
+
+        async function deleteDoc(id) {
+            if (isDataLocked) return; 
+            if (confirm("Bạn có chắc chắn muốn xóa tài liệu này? Không thể hoàn tác sau khi xóa.")) {
+                try {
+                    await fetch(`${API_URL}/${id}`, { method: 'DELETE' }); loadDocs();
+                } catch (error) { alert("Không thể xóa tài liệu. Vui lòng thử lại."); }
+            }
+        }
+
+        window.onload = () => { applyLockState(); loadDocs(); };
+    </script>
+</body>
+</html>

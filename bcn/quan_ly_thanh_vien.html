@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Thành viên - CLB IP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root { --primary: #0f4c81; --primary-light: #2d73b3; --secondary: #f0f4f8; --text-main: #1e293b; --text-muted: #64748b; --bg: #f8fafc; --white: #ffffff; --danger: #ef4444; --border: #e2e8f0; --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); --success: #10b981; --info: #0ea5e9; --warning: #f59e0b; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { display: flex; min-height: 100vh; background-color: var(--bg); color: var(--text-main); }
+        
+        .sidebar { width: 260px; background: var(--white); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .sidebar-header { padding: 24px 20px; text-align: center; border-bottom: 1px solid var(--border); }
+        .sidebar-header h2 { color: var(--primary); font-size: 22px; font-weight: 700; }
+        .sidebar-menu { padding: 16px 12px; flex: 1; }
+        .sidebar-menu a { display: flex; align-items: center; gap: 12px; color: var(--text-muted); text-decoration: none; padding: 12px 16px; border-radius: 8px; margin-bottom: 4px; font-weight: 500; transition: all 0.2s; }
+        .sidebar-menu a:hover { background: var(--secondary); color: var(--primary); }
+        .sidebar-menu a.active { background: var(--primary); color: var(--white); box-shadow: 0 4px 6px -1px rgba(15, 76, 129, 0.2); }
+        .sidebar-menu a i { font-size: 18px; width: 24px; text-align: center; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
+        .top-navbar { background: var(--white); padding: 16px 32px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+        .page-title { font-size: 20px; font-weight: 600; }
+        .content-body { padding: 32px; flex: 1; }
+
+        .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
+        .search-box { position: relative; width: 300px; }
+        .search-box i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+        .search-box input { width: 100%; padding: 10px 14px 10px 40px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; transition: border 0.2s; }
+        .search-box input:focus { border-color: var(--primary); }
+        
+        .filter-select { padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; background: var(--white); cursor: pointer; color: var(--text-main); }
+        .filter-select:focus { border-color: var(--primary); }
+
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: var(--primary); color: var(--white); border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .btn:hover { background: var(--primary-light); transform: translateY(-1px); }
+        .btn-danger { background: var(--danger); padding: 6px 12px; font-size: 13px; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-success { background: var(--success); }
+        .btn-success:hover { background: #059669; }
+        .btn-info { background: var(--info); padding: 6px 12px; font-size: 13px; }
+        .btn-info:hover { background: #0284c7; }
+        .btn-warning { background: var(--warning); }
+        .btn-warning:hover { background: #d97706; }
+
+        .table-container { background: var(--white); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        th { background: #f8fafc; font-weight: 600; color: var(--text-muted); font-size: 13px; text-transform: uppercase; }
+        td { font-size: 14px; vertical-align: middle; }
+        tr:hover td { background: var(--secondary); }
+
+        .invalid-cell { background-color: #fee2e2 !important; color: #ef4444 !important; border: 1px solid #ef4444 !important; font-weight: 600; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; white-space: nowrap; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: var(--white); padding: 32px; border-radius: 16px; width: 450px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+        .modal-content.large { width: 600px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px; }
+        .form-control { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 6px; outline: none; }
+        .form-control:focus { border-color: var(--primary); }
+
+        /* Styles cho Bảng tóm tắt cá nhân (360 độ) */
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px; }
+        .summary-card { background: var(--secondary); padding: 16px; border-radius: 8px; border: 1px solid var(--border); }
+        .summary-card h4 { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; }
+        .summary-card .value { font-size: 16px; font-weight: 600; color: var(--primary); }
+        .summary-card .status { font-size: 14px; margin-top: 4px; font-weight: 500; }
+        .summary-header-info { text-align: center; margin-bottom: 24px; }
+        .summary-avatar { width: 64px; height: 64px; background: var(--primary-light); color: white; font-size: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+
+        footer { padding: 20px; text-align: center; font-size: 13px; color: var(--text-muted); border-top: 1px solid var(--border); background: var(--white); margin-top: auto; line-height: 1.6; }
+        
+        @media (max-width: 768px) { body { flex-direction: column; } .sidebar { width: 100%; height: auto; border-bottom: 1px solid var(--border); } .sidebar-menu { display: flex; overflow-x: auto; } .table-container { overflow-x: auto; } .summary-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header"><h2>CLB IP ADMIN</h2></div>
+        <div class="sidebar-menu">
+            <a href="../trang_chu.html"><i class="fas fa-chart-pie"></i> Trang Chủ</a>
+            <a href="quan_ly_thanh_vien.html" class="active"><i class="fas fa-users"></i> Thành Viên</a>
+            <a href="quan_ly_quy.html"><i class="fas fa-wallet"></i> Quỹ CLB</a>
+            <a href="quan_ly_tai_lieu.html"><i class="fas fa-folder-open"></i> Tài Liệu</a>
+            <a href="quan_ly_ke_hoach.html"><i class="fas fa-calendar-alt"></i> Kế Hoạch</a>
+            <a href="quan_ly_diem_danh.html"><i class="fas fa-clipboard-check"></i> Điểm Danh</a>
+            <a href="quan_ly_bcn.html"><i class="fas fa-sitemap"></i> Ban Chủ Nhiệm</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-navbar"><h1 class="page-title">Quản Lý Thành Viên</h1></div>
+        
+        <div class="content-body">
+            <div class="action-bar">
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Tìm tên, MSSV, lớp..." onkeyup="searchMember()">
+                    </div>
+                    
+                    <select class="filter-select" id="classFilter" onchange="searchMember()">
+                        <option value="All">Tất cả các lớp</option>
+                    </select>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-warning" id="btnLockToggle" onclick="toggleDataLock()">
+                        <i class="fas fa-unlock"></i> Đang mở khóa
+                    </button>
+                    
+                    <div id="editableActions" style="display: flex; gap: 10px;">
+                        <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelImport(event)">
+                        <button class="btn btn-success" onclick="document.getElementById('excelFileInput').click()">
+                            <i class="fas fa-file-import"></i> Nhập Excel
+                        </button>
+                        
+                        <button class="btn" onclick="openFormModal(null)">
+                            <i class="fas fa-plus"></i> Thêm Thành Viên
+                        </button>
+                    </div>
+
+                    <button class="btn btn-success" onclick="exportToExcel()">
+                        <i class="fas fa-file-export"></i> Xuất Excel
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Mã TV</th>
+                            <th>Họ Tên</th>
+                            <th>MSSV</th>
+                            <th>Lớp</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="memberTable"></tbody>
+                </table>
+            </div>
+            
+            <div id="saveImportArea" style="display: none; margin-top: 16px; text-align: right;">
+                <button class="btn btn-success" onclick="saveAllImported()">
+                    <i class="fas fa-save"></i> Lưu Dữ Liệu Hợp Lệ Lên Hệ Thống
+                </button>
+                <button class="btn btn-danger" onclick="cancelImport()">Hủy Bỏ</button>
+            </div>
+        </div>
+
+        <footer>
+            @2026 Bản quyền thuộc về CLB IP<br>Khoa Tin học - Trường Đại học Sư phạm Huế
+        </footer>
+    </div>
+
+    <!-- Modal Thêm/Sửa Thành Viên -->
+    <div class="modal" id="modalForm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Thêm Thành Viên</h2>
+                <button class="close-btn" onclick="closeFormModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="memberForm">
+                <div class="form-group"><label>Họ và tên</label><input type="text" class="form-control" id="ho_ten" required></div>
+                <div class="form-group"><label>MSSV</label><input type="text" class="form-control" id="mssv" required></div>
+                <div class="form-group"><label>Lớp</label><input type="text" class="form-control" id="lop" required></div>
+                <div class="form-group"><label>Số điện thoại</label><input type="text" class="form-control" id="sdt"></div>
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label>Giới tính</label>
+                        <select class="form-control" id="gioi_tinh"><option value="Nam">Nam</option><option value="Nữ">Nữ</option></select>
+                    </div>
+                    <div>
+                        <label>Trạng thái</label>
+                        <select class="form-control" id="trang_thai_hd">
+                            <option value="Đang hoạt động">Đang hoạt động</option>
+                            <option value="Cựu thành viên">Cựu thành viên</option>
+                            <option value="Đình chỉ/Nghỉ phép">Đình chỉ/Nghỉ phép</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Lưu Thông Tin</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Hồ sơ 360 độ (Xem chi tiết) -->
+    <div class="modal" id="modalSummary">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2>Hồ Sơ Thành Viên</h2>
+                <button class="close-btn" onclick="document.getElementById('modalSummary').style.display='none'"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="summary-header-info">
+                <div class="summary-avatar"><i class="fas fa-user"></i></div>
+                <h3 id="sumName" style="font-size: 20px; color: var(--text-main);">...</h3>
+                <p id="sumMssv" style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">...</p>
+                <div id="sumStatus" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h4><i class="fas fa-sitemap"></i> Ban/Chức vụ (BCN)</h4>
+                    <div class="value" id="sumRole">Đang tải...</div>
+                </div>
+                <div class="summary-card">
+                    <h4><i class="fas fa-clipboard-check"></i> Chuyên cần</h4>
+                    <div class="value" id="sumAbsence" style="color: var(--danger);">Đang tải...</div>
+                    <div class="status" style="color: var(--text-muted); font-size: 12px;">Tổng số buổi vắng</div>
+                </div>
+                <div class="summary-card" style="grid-column: span 2;">
+                    <h4><i class="fas fa-wallet"></i> Tình trạng đóng quỹ</h4>
+                    <div class="value" id="sumFund" style="color: var(--success);">Chưa có dữ liệu API quỹ cá nhân</div>
+                    <div class="status" style="color: var(--text-muted); font-size: 12px;">Thông tin đóng quỹ hàng tháng</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api/members';
+        let allMembers = [];
+        let importedValidData = [];
+        let currentEditId = null; 
+        
+        let isDataLocked = localStorage.getItem('isAppLocked') === 'true';
+
+        async function loadMembers() {
+            try {
+                const res = await fetch(API_URL);
+                let rawData = await res.json();
+                
+                // Thuật toán sắp xếp danh sách theo bảng chữ cái (Cột Họ Tên)
+                allMembers = rawData.sort((a, b) => {
+                    const nameA = (a.ho_ten || '').trim();
+                    const nameB = (b.ho_ten || '').trim();
+                    
+                    // Cắt lấy phần "Tên" cuối cùng để ưu tiên so sánh chuẩn VN
+                    const tenA = nameA.substring(nameA.lastIndexOf(' ') + 1);
+                    const tenB = nameB.substring(nameB.lastIndexOf(' ') + 1);
+                    
+                    const cmp = tenA.localeCompare(tenB, 'vi');
+                    // Nếu trùng Tên, so sánh toàn bộ Họ và Tên đệm
+                    if(cmp === 0) return nameA.localeCompare(nameB, 'vi');
+                    return cmp;
+                });
+
+                populateClassFilter(); 
+                renderTable(allMembers);
+            } catch (err) { console.error("Lỗi kết nối tới API:", err); }
+        }
+
+        function populateClassFilter() {
+            const classSelect = document.getElementById('classFilter');
+            classSelect.innerHTML = '<option value="All">Tất cả các lớp</option>'; 
+            const uniqueClasses = [...new Set(allMembers.map(tv => tv.lop).filter(lop => lop && lop.trim() !== ''))];
+            uniqueClasses.sort(); 
+            uniqueClasses.forEach(lop => {
+                const option = document.createElement('option');
+                option.value = lop; option.textContent = lop; classSelect.appendChild(option);
+            });
+        }
+
+        function applyLockState() {
+            const btnLock = document.getElementById('btnLockToggle');
+            const editableActions = document.getElementById('editableActions');
+            if (isDataLocked) {
+                btnLock.innerHTML = '<i class="fas fa-lock"></i> Đã khóa dữ liệu';
+                btnLock.style.background = '#ef4444';
+                if (editableActions) editableActions.style.display = 'none';
+                cancelImport(); 
+            } else {
+                btnLock.innerHTML = '<i class="fas fa-unlock"></i> Đang mở khóa';
+                btnLock.style.background = '#f59e0b';
+                if (editableActions) editableActions.style.display = 'flex';
+            }
+        }
+
+        function toggleDataLock() {
+            isDataLocked = !isDataLocked;
+            localStorage.setItem('isAppLocked', isDataLocked);
+            applyLockState(); renderTable(allMembers); 
+        }
+
+        function renderTable(data, isPreview = false) {
+            const tbody = document.getElementById('memberTable');
+            tbody.innerHTML = '';
+            if (isPreview) importedValidData = [];
+            
+            data.forEach((tv, index) => {
+                let isValid = true;
+                if (isPreview) {
+                    if (!tv.ho_ten || String(tv.ho_ten).trim() === '') isValid = false;
+                    if (!tv.mssv || String(tv.mssv).trim() === '') isValid = false;
+                    if (!tv.lop || String(tv.lop).trim() === '') isValid = false;
+                    if (isValid) importedValidData.push(tv);
+                }
+
+                // Xử lý Huy hiệu trạng thái
+                let statusBadge = '';
+                const status = tv.trang_thai_hd || 'Đang hoạt động';
+                if(status === 'Đang hoạt động') statusBadge = `<span class="badge" style="background:#dcfce7; color:#16a34a;">Đang hoạt động</span>`;
+                else if(status === 'Cựu thành viên') statusBadge = `<span class="badge" style="background:#e2e8f0; color:#475569;">Cựu thành viên</span>`;
+                else statusBadge = `<span class="badge" style="background:#fee2e2; color:#dc2626;">Đình chỉ/Nghỉ phép</span>`;
+
+                let actionBtnHtml = '';
+                if (isPreview) {
+                    actionBtnHtml = isValid ? `<span style="color: #10b981; font-weight: 500;">Hợp lệ</span>` : `<span style="color: #ef4444; font-weight: 500;">Lỗi Dữ Liệu</span>`;
+                } else {
+                    if (isDataLocked) {
+                        actionBtnHtml = `<span style="color: #94a3b8;"><i class="fas fa-lock"></i> Đã khóa</span>`;
+                    } else {
+                        actionBtnHtml = `
+                            <button class="btn btn-info" onclick="openFormModal(${tv.id})"><i class="fas fa-edit"></i> Sửa</button>
+                            <button class="btn btn-danger" onclick="deleteMember(${tv.id})"><i class="fas fa-trash"></i> Xóa</button>
+                        `;
+                    }
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${tv.ma_tv || 'Tự động tạo'}</b></td>
+                        <td>
+                            <a href="#" onclick="viewMemberSummary(${tv.id})" style="color: var(--primary); font-weight: 600; text-decoration: none;">
+                                ${tv.ho_ten || ''}
+                            </a>
+                        </td>
+                        <td>${tv.mssv || ''}</td>
+                        <td>${tv.lop || ''}</td>
+                        <td>${statusBadge}</td>
+                        <td>${actionBtnHtml}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Chức năng Xem Hồ Sơ 360 Độ
+        async function viewMemberSummary(id) {
+            const tv = allMembers.find(m => m.id === id);
+            if (!tv) return;
+
+            document.getElementById('sumName').innerText = tv.ho_ten;
+            document.getElementById('sumMssv').innerText = `${tv.mssv} | Lớp: ${tv.lop} | ${tv.sdt || 'Chưa cập nhật SĐT'}`;
+            
+            const status = tv.trang_thai_hd || 'Đang hoạt động';
+            let statusBadge = status === 'Đang hoạt động' ? `<span class="badge" style="background:#dcfce7; color:#16a34a;">Đang hoạt động</span>` : 
+                              status === 'Cựu thành viên' ? `<span class="badge" style="background:#e2e8f0; color:#475569;">Cựu thành viên</span>` : 
+                              `<span class="badge" style="background:#fee2e2; color:#dc2626;">Đình chỉ/Nghỉ phép</span>`;
+            document.getElementById('sumStatus').innerHTML = statusBadge;
+
+            document.getElementById('sumRole').innerText = "Đang tải...";
+            document.getElementById('sumAbsence').innerText = "Đang tải...";
+            
+            document.getElementById('modalSummary').style.display = 'flex';
+
+            try {
+                // Fetch dữ liệu Ban Chủ Nhiệm
+                const resBoard = await fetch('http://localhost:3000/api/board');
+                const boardData = await resBoard.json();
+                const bcnRole = boardData.find(b => parseInt(b.thanh_vien_id) === id);
+                document.getElementById('sumRole').innerText = bcnRole ? `${bcnRole.chuc_vu} - Ban ${bcnRole.ban_phu_trach}` : "Thành viên ban thường";
+
+                // Fetch dữ liệu Điểm danh
+                const resAtt = await fetch('http://localhost:3000/api/attendance');
+                document.getElementById('sumAbsence').innerText = "Đang cập nhật (Cần đồng bộ API)";
+            } catch (error) {
+                console.error(error);
+                document.getElementById('sumRole').innerText = "Không thể kết nối API";
+                document.getElementById('sumAbsence').innerText = "Không thể kết nối API";
+            }
+        }
+
+        function openFormModal(id = null) {
+            currentEditId = id;
+            const modal = document.getElementById('modalForm');
+            const form = document.getElementById('memberForm');
+            const title = document.getElementById('modalTitle');
+
+            if (id === null) {
+                title.innerText = "Thêm Thành Viên";
+                form.reset();
+                document.getElementById('trang_thai_hd').value = "Đang hoạt động";
+            } else {
+                title.innerText = "Bổ Sung / Sửa Thông Tin";
+                const member = allMembers.find(m => m.id === id);
+                if (member) {
+                    document.getElementById('ho_ten').value = member.ho_ten || '';
+                    document.getElementById('mssv').value = member.mssv || '';
+                    document.getElementById('lop').value = member.lop || '';
+                    document.getElementById('sdt').value = member.sdt || '';
+                    document.getElementById('gioi_tinh').value = member.gioi_tinh || 'Nam';
+                    document.getElementById('trang_thai_hd').value = member.trang_thai_hd || 'Đang hoạt động';
+                }
+            }
+            modal.style.display = 'flex';
+        }
+
+        function closeFormModal() {
+            document.getElementById('modalForm').style.display = 'none';
+            document.getElementById('memberForm').reset();
+            currentEditId = null;
+        }
+
+        document.getElementById('memberForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const memberData = {
+                ho_ten: document.getElementById('ho_ten').value,
+                mssv: document.getElementById('mssv').value,
+                lop: document.getElementById('lop').value,
+                sdt: document.getElementById('sdt').value,
+                gioi_tinh: document.getElementById('gioi_tinh').value,
+                trang_thai_hd: document.getElementById('trang_thai_hd').value
+            };
+
+            try {
+                if (currentEditId === null) {
+                    await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(memberData) });
+                } else {
+                    await fetch(`${API_URL}/${currentEditId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(memberData) });
+                }
+                closeFormModal();
+                loadMembers();
+            } catch (error) { alert("Đã xảy ra lỗi khi lưu!"); }
+        });
+
+        function exportToExcel() {
+            if (allMembers.length === 0) return alert("Không có dữ liệu để xuất!");
+            const dataToExport = allMembers.map(tv => ({ "Mã TV": tv.ma_tv, "Họ Tên": tv.ho_ten, "MSSV": tv.mssv, "Lớp": tv.lop, "SĐT": tv.sdt, "Giới Tính": tv.gioi_tinh, "Trạng thái": tv.trang_thai_hd || 'Đang hoạt động' }));
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Thanh_Vien");
+            XLSX.writeFile(workbook, "Danh_sach_thanh_vien_CLB.xlsx");
+        }
+
+        function handleExcelImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+                
+                const importedData = [];
+                for (let i = 1; i < json.length; i++) {
+                    if (json[i].length === 0) continue;
+                    importedData.push({ 
+                        ma_tv: json[i][0] || "", 
+                        ho_ten: json[i][1] || "", 
+                        mssv: json[i][2] || "", 
+                        lop: json[i][3] || "", 
+                        sdt: json[i][4] || "", 
+                        gioi_tinh: json[i][5] || "Nam",
+                        trang_thai_hd: json[i][6] || "Đang hoạt động"
+                    });
+                }
+                renderTable(importedData, true);
+                document.getElementById('saveImportArea').style.display = 'block';
+                event.target.value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function saveAllImported() {
+            if(importedValidData.length === 0) return alert("Không có dữ liệu hợp lệ!");
+            if(confirm(`Lưu ${importedValidData.length} thành viên hợp lệ?`)) {
+                for (const member of importedValidData) {
+                    await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(member) });
+                }
+                alert("Hoàn tất!"); cancelImport();
+            }
+        }
+
+        function cancelImport() {
+            document.getElementById('saveImportArea').style.display = 'none';
+            loadMembers();
+        }
+
+        function searchMember() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            const selectedClass = document.getElementById('classFilter').value;
+            const filtered = allMembers.filter(tv => {
+                const matchKeyword = (tv.ho_ten && tv.ho_ten.toLowerCase().includes(keyword)) || 
+                                     (tv.mssv && tv.mssv.toLowerCase().includes(keyword)) || 
+                                     (tv.lop && tv.lop.toLowerCase().includes(keyword));
+                const matchClass = selectedClass === 'All' || tv.lop === selectedClass;
+                return matchKeyword && matchClass;
+            });
+            renderTable(filtered);
+        }
+
+        async function deleteMember(id) {
+            if (isDataLocked) return; 
+            if(confirm('Bạn có chắc chắn muốn xóa thành viên này?')) {
+                await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                loadMembers();
+            }
+        }
+
+        window.onload = () => { applyLockState(); loadMembers(); };
+    </script>
+</body>
+</html>

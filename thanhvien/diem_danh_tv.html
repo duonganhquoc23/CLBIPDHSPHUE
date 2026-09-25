@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Điểm Danh - CLB IP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary: #2563eb; --primary-hover: #1d4ed8; --bg: #f8fafc; --surface: #ffffff; --text-main: #0f172a; --text-muted: #64748b; --border: #e2e8f0; --warning: #f59e0b; --success: #10b981; --error: #ef4444; --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05); --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; line-height: 1.5; overflow-x: hidden; }
+        
+        .navbar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; padding: 0 5%; height: 80px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+        .brand { display: flex; align-items: center; gap: 15px; text-decoration: none; justify-self: start; cursor: pointer; transition: 0.2s;}
+        .brand:hover { transform: scale(1.02); }
+        .brand img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2.5px solid var(--primary); padding: 2px; background: white; box-shadow: var(--shadow-sm); }
+        .brand-text { display: flex; flex-direction: column; line-height: 1.2; }
+        .brand-text .faculty { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .brand-text .name { font-size: 22px; font-weight: 900; color: var(--primary); letter-spacing: 0.5px; text-shadow: 0px 1px 1px rgba(0,0,0,0.05); }
+
+        .nav-links { justify-self: center; display: flex; gap: 8px; align-items: center; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 15px; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
+        .nav-links a:hover { background: #f1f5f9; color: var(--primary); }
+        .nav-links a.active { background: var(--success); color: white; box-shadow: var(--shadow-sm); }
+
+        .nav-actions { justify-self: end; }
+        .btn-outline { background: white; border: 1.5px solid var(--border); color: var(--text-main); padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        .container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+        .attendance-card { background: var(--surface); padding: 40px; border-radius: 24px; box-shadow: var(--shadow-lg); border: 1px solid var(--border); width: 100%; max-width: 450px; text-align: center; }
+        .icon-circle { width: 80px; height: 80px; background: #dcfce7; color: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; margin: 0 auto 24px; }
+        .attendance-card h2 { font-size: 24px; font-weight: 800; margin-bottom: 10px; color: var(--text-main); }
+        .attendance-card p { font-size: 14.5px; color: var(--text-muted); margin-bottom: 30px; }
+        
+        .input-group { position: relative; margin-bottom: 24px; }
+        .input-group i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 18px; }
+        .form-control { width: 100%; padding: 16px 16px 16px 45px; border: 2px solid var(--border); border-radius: 12px; font-size: 16px; font-family: inherit; font-weight: 500; outline: none; transition: 0.2s; background: var(--bg); }
+        .form-control:focus { border-color: var(--success); background: white; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); }
+        .form-control:disabled { background: #f1f5f9; cursor: not-allowed; color: #94a3b8; border-color: var(--border); }
+        
+        .btn-large { width: 100%; padding: 16px; background: var(--success); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn-large:hover:not(:disabled) { background: #059669; transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2); }
+        .btn-large:disabled { background: #94a3b8; cursor: not-allowed; transform: none; box-shadow: none; opacity: 0.8; }
+
+        .site-footer { background: #0f172a; color: #94a3b8; padding: 50px 5% 20px; margin-top: auto; }
+        .footer-content { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 30px; margin-bottom: 30px; border-bottom: 1px solid #1e293b; padding-bottom: 30px; }
+        .footer-info h3 { color: white; font-size: 18px; margin-bottom: 15px; font-weight: 600; }
+        .footer-info p { margin-bottom: 10px; font-size: 14.5px; display: flex; align-items: center; gap: 10px; }
+        .footer-info i { width: 20px; color: var(--primary); text-align: center; }
+        .footer-connect { text-align: center; min-width: 200px; }
+        .footer-connect h3 { color: white; font-size: 16px; margin-bottom: 15px; font-weight: 600; }
+        .footer-social { display: flex; gap: 15px; align-items: center; justify-content: center; }
+        .social-btn { width: 40px; height: 40px; border-radius: 50%; background: #1e293b; color: white; display: flex; align-items: center; justify-content: center; font-size: 18px; text-decoration: none; transition: 0.3s; }
+        .social-btn:hover { background: var(--primary); transform: translateY(-3px); color: white; }
+        .footer-bottom { text-align: center; font-size: 13px; color: #64748b; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+        .modal { background: var(--surface); width: 100%; max-width: 500px; border-radius: 20px; padding: 30px; box-shadow: var(--shadow-lg); position: relative; max-height: 90vh; overflow-y: auto; }
+        .modal-large { max-width: 900px; }
+        .close-modal { position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; transition: 0.2s; z-index: 10; }
+        .close-modal:hover { color: var(--error); }
+        .form-label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 8px; color: var(--text-main); }
+        .form-input { width: 100%; padding: 12px 16px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 15px; outline: none; transition: 0.2s; margin-bottom: 20px; font-family: inherit; }
+        .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        
+        .modal-noti { text-align: center; max-width: 400px; padding: 40px 30px; }
+        .noti-icon { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px; }
+        .noti-icon.success { background: #dcfce7; color: var(--success); }
+        .noti-icon.error { background: #fee2e2; color: var(--error); }
+        .noti-icon.info { background: #e0f2fe; color: #0284c7; }
+        .noti-title { font-size: 22px; font-weight: 800; margin-bottom: 12px; color: var(--text-main); }
+        .noti-desc { color: var(--text-muted); font-size: 15px; line-height: 1.6; margin-bottom: 25px; }
+
+        .org-tree-wrapper { display: block; width: 100%; overflow: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 40px 20px; margin-top: 15px; }
+        .org-tree { display: flex; justify-content: center; min-width: max-content; }
+        .org-tree ul { padding-top: 20px; position: relative; display: flex; justify-content: center; list-style: none; padding-left: 0; margin: 0; }
+        .org-tree li { text-align: center; list-style-type: none; position: relative; padding: 20px 10px 0 10px; }
+        
+        .org-tree li::before, .org-tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid var(--primary); width: 50%; height: 20px; }
+        .org-tree li::after { right: auto; left: 50%; border-left: 2px solid var(--primary); }
+        .org-tree li:only-child::after, .org-tree li:only-child::before { display: none; }
+        .org-tree li:only-child { padding-top: 0; }
+        .org-tree li:first-child::before, .org-tree li:last-child::after { border: 0 none; }
+        .org-tree li:last-child::before { border-right: 2px solid var(--primary); border-radius: 0 6px 0 0; }
+        .org-tree li:first-child::after { border-radius: 6px 0 0 0; }
+        .org-tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid var(--primary); width: 0; height: 20px; transform: translateX(-50%); }
+        
+        .node-box { display: inline-block; padding: 12px 18px; border: 2px solid var(--primary); border-radius: 8px; position: relative; z-index: 1; background: white; min-width: 150px; }
+        .node-name { font-size: 14.5px; font-weight: 700; display: block; margin-bottom: 4px; white-space: nowrap; }
+        .node-role { font-size: 12px; font-weight: 600; display: block; white-space: nowrap; }
+        
+        .node-box.chief { background: #dbeafe; border-color: #3b82f6; }
+        .node-box.chief .node-name { color: #1e40af; } .node-box.chief .node-role { color: #2563eb; }
+        .node-box.vice { background: #e0e7ff; border-color: #6366f1; }
+        .node-box.vice .node-name { color: #3730a3; } .node-box.vice .node-role { color: #4f46e5; }
+        .node-box.member { background: #fef3c7; border-color: #f59e0b; }
+        .node-box.member .node-name { color: #92400e; } .node-box.member .node-role { color: #d97706; }
+        .node-box.sub { background: white; border-color: #cbd5e1; border-width: 1.5px;}
+
+        @media (max-width: 900px) {
+            .navbar { display: flex; flex-wrap: wrap; height: auto; padding: 15px 20px; justify-content: space-between; }
+            .nav-links { order: 3; width: 100%; justify-content: center; margin-top: 15px; overflow-x: auto; }
+            .nav-actions { order: 2; }
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <a href="#" class="brand" onclick="openHistoryModal(event)" title="Click để xem Lịch sử CLB">
+            <img src="../hinhanh/logo.jpg" alt="Logo" onerror="this.src='https://ui-avatars.com/api/?name=IP&background=2563eb&color=fff'">
+            <div class="brand-text">
+                <span class="faculty">LCĐ Khoa Tin Học</span>
+                <span class="name">CLB IP</span>
+            </div>
+        </a>
+        <div class="nav-links">
+            <a href="trang_chu_tv.html"><i class="fas fa-home"></i> Bảng Tin</a>
+            <a href="tai_lieu_tv.html"><i class="fas fa-folder-open"></i> Tài Liệu</a>
+            <a href="diem_danh_tv.html" class="active"><i class="fas fa-clipboard-check"></i> Điểm Danh</a>
+        </div>
+        <div class="nav-actions">
+            <button class="btn-outline" onclick="openFeedback()"><i class="fas fa-paper-plane"></i> Góp ý</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="attendance-card" id="attendanceCardBody">
+            <div class="icon-circle"><i class="fas fa-qrcode"></i></div>
+            <h2>Xác Nhận Tham Gia</h2>
+            <p id="sessionNameDesc">Đang tải thông tin điểm danh...</p>
+            
+            <div class="input-group">
+                <i class="fas fa-id-card"></i>
+                <input type="text" id="msvInput" class="form-control" placeholder="hãy nhập mã sinh viên của bạn" disabled>
+            </div>
+            <button class="btn-large" id="btnSubmit" onclick="submitAttendance()" disabled>Check-in Ngay</button>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-info">
+                <h3>CLB IP - LCĐ Khoa Tin học - Trường ĐHSP Huế</h3>
+                <p><i class="fas fa-phone"></i> Điện thoại: 036 7090 125</p>
+                <p><i class="fas fa-envelope"></i> Email: clbipkth@gmail.com</p>
+                <p><i class="fas fa-map-marker-alt"></i> Địa chỉ: Khoa Tin học, Trường Đại học Sư phạm, Đại học Huế</p>
+            </div>
+            <div class="footer-connect">
+                <h3>Kết nối với chúng tôi</h3>
+                <div class="footer-social">
+                    <a href="https://www.facebook.com/profile.php?id=61594514309684" target="_blank" class="social-btn"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" target="_blank" class="social-btn"><i class="fab fa-tiktok"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">&copy; 2026 Bản quyền thuộc về CLB IP - Hệ thống quản lý nội bộ.</div>
+    </footer>
+
+    <!-- MODALS -->
+    <div class="modal-overlay" id="modalResult">
+        <div class="modal modal-noti">
+            <div id="resultLoading" style="display: none;">
+                <div class="noti-icon info"><i class="fas fa-spinner fa-spin"></i></div>
+                <h2 class="noti-title">Đang kết nối vệ tinh...</h2>
+                <p class="noti-desc" id="loadingMsg">Vui lòng đợi vài giây và <b>Cho phép (Allow)</b> nếu trình duyệt yêu cầu quyền Vị trí.</p>
+            </div>
+            <div id="resultSuccess" style="display: none;">
+                <div class="noti-icon success"><i class="fas fa-check-circle"></i></div>
+                <h2 class="noti-title">Điểm danh thành công! 🎉</h2>
+                <p class="noti-desc" id="successMsg"></p>
+                <button class="btn-large" onclick="closeResultModal()">Tuyệt vời 💖</button>
+            </div>
+            <div id="resultError" style="display: none;">
+                <div class="noti-icon error"><i class="fas fa-exclamation-triangle"></i></div>
+                <h2 class="noti-title">Ối, có lỗi xảy ra! 😥</h2>
+                <p class="noti-desc" id="errorMsg"></p>
+                <button class="btn-large" style="background: var(--primary);" onclick="submitAttendance()">Định vị lại</button>
+                <button class="btn-outline" style="width: 100%; margin-top: 12px; justify-content: center;" onclick="closeResultModal()">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalFeedback">
+        <div class="modal">
+            <button class="close-modal" onclick="closeFeedback()"><i class="fas fa-times"></i></button>
+            <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 24px; color: var(--text-main);"><i class="fas fa-paper-plane" style="color: var(--primary);"></i> Gửi Góp Ý</h2>
+            <label class="form-label">Họ và tên (Tùy chọn - Có thể ẩn danh):</label>
+            <input type="text" class="form-input" placeholder="Nhập tên của bạn...">
+            <label class="form-label">Nội dung góp ý / Đề xuất (*):</label>
+            <textarea class="form-input" rows="5" placeholder="Ý tưởng, đóng góp hoặc vấn đề bạn gặp phải..."></textarea>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button class="btn-outline" onclick="closeFeedback()">Hủy bỏ</button>
+                <button class="btn-primary" onclick="submitFeedback()">Gửi Đi</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalHistoryClub">
+        <div class="modal modal-large">
+            <button class="close-modal" onclick="closeHistoryModal()"><i class="fas fa-times"></i></button>
+            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 15px; color: var(--primary);"><i class="fas fa-info-circle"></i> Về Câu Lạc Bộ IP</h2>
+            <h3 style="font-size: 16px; margin-bottom: 10px; font-weight: 700;">Lịch sử hình thành</h3>
+            <p style="color: var(--text-muted); margin-bottom: 20px; line-height: 1.7; font-size: 15px; text-align: justify;">Câu lạc bộ IP (Information and Pedagogy) trực thuộc Liên Chi Đoàn Khoa Tin học, Trường Đại học Sư phạm, Đại học Huế.</p>
+            <h3 style="font-size: 16px; margin-bottom: 15px; font-weight: 700;">Sơ đồ Tổ chức Ban Chủ Nhiệm</h3>
+            <div class="org-tree-wrapper"><div class="org-tree"></div></div>
+            <div style="text-align: right; margin-top: 25px;"><button class="btn-primary" onclick="closeHistoryModal()">Đóng</button></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL_BASE = 'http://localhost:3000/api';
+        let activeSessions = [];
+        let selectedSession = null;
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; const p1 = lat1 * Math.PI/180; const p2 = lat2 * Math.PI/180;
+            const deltaP = (lat2-lat1) * Math.PI/180; const deltaLon = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(deltaP/2) * Math.sin(deltaP/2) + Math.cos(p1) * Math.cos(p2) * Math.sin(deltaLon/2) * Math.sin(deltaLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        async function loadActiveSession() {
+            try {
+                const res = await fetch(`${API_URL_BASE}/attendance`);
+                if(!res.ok) throw new Error();
+                const sessions = await res.json();
+                
+                activeSessions = sessions.filter(s => s.trang_thai === 'Đang mở');
+                const cardBody = document.getElementById('attendanceCardBody');
+
+                if (activeSessions.length === 0) {
+                    cardBody.innerHTML = `<div class="icon-circle" style="background: #fee2e2; color: var(--error);"><i class="fas fa-clock"></i></div><h2>Chưa Tới Giờ Điểm Danh</h2><p>Hiện tại BCN chưa khởi tạo phiên điểm danh nào. Vui lòng quay lại sau!</p>`;
+                } else if (activeSessions.length === 1) {
+                    selectedSession = activeSessions[0];
+                    document.getElementById('sessionNameDesc').innerHTML = `Phiên hoạt động: <b>${selectedSession.ten_hoat_dong}</b><br>Hệ thống sẽ yêu cầu quyền Định vị (GPS) để xác minh vị trí của bạn.`;
+                    checkSessionLock(selectedSession);
+                } else {
+                    // FIX LỖI 4: Giao diện Dropdown cho sinh viên chọn khi Admin lỡ tạo 2 phiên mở cùng lúc
+                    let options = '<option value="">-- CHỌN PHIÊN BẠN ĐANG THAM GIA --</option>';
+                    activeSessions.forEach(s => options += `<option value="${s.id}">${s.ten_hoat_dong}</option>`);
+                    
+                    cardBody.innerHTML = `
+                        <div class="icon-circle" style="background:#fffbeb; color:#d97706;"><i class="fas fa-exclamation-triangle"></i></div>
+                        <h2>Chọn Phiên Điểm Danh</h2>
+                        <p style="color:var(--error); font-weight:600; margin-bottom:10px;">Có nhiều phiên đang mở cùng lúc!</p>
+                        <select id="sessionSelector" class="form-control" style="margin-bottom:20px; font-weight:bold; color:var(--primary); padding:16px;" onchange="selectSession(this.value)">
+                            ${options}
+                        </select>
+                        <div id="checkinArea" style="display:none;">
+                            <div class="input-group">
+                                <i class="fas fa-id-card"></i>
+                                <input type="text" id="msvInput" class="form-control" placeholder="Nhập mã sinh viên của bạn">
+                            </div>
+                            <button class="btn-large" id="btnSubmit" onclick="submitAttendance()">Check-in Ngay</button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('attendanceCardBody').innerHTML = `<div class="icon-circle" style="background: #fee2e2; color: var(--error);"><i class="fas fa-wifi"></i></div><h2>Lỗi Kết Nối</h2><p>Hệ thống đang bảo trì hoặc mất kết nối máy chủ. Vui lòng thử lại sau!</p>`;
+            }
+        }
+
+        function selectSession(id) {
+            const area = document.getElementById('checkinArea');
+            if(!id) {
+                area.style.display = 'none';
+                selectedSession = null;
+                return;
+            }
+            selectedSession = activeSessions.find(s => s.id == id);
+            area.style.display = 'block';
+            checkSessionLock(selectedSession);
+        }
+
+        function checkSessionLock(session) {
+            const savedMssv = localStorage.getItem(`checkedIn_session_${session.id}`);
+            const msvInput = document.getElementById('msvInput');
+            const btnSubmit = document.getElementById('btnSubmit');
+
+            if (savedMssv) {
+                if(activeSessions.length === 1) document.getElementById('sessionNameDesc').innerHTML = `Bạn đã hoàn tất điểm danh cho phiên:<br><b>${session.ten_hoat_dong}</b>`;
+                msvInput.value = savedMssv; msvInput.disabled = true; btnSubmit.disabled = true; btnSubmit.innerHTML = '<i class="fas fa-check-circle"></i> Đã Check-in';
+            } else {
+                if(activeSessions.length === 1) document.getElementById('sessionNameDesc').innerHTML = `Phiên hoạt động: <b>${session.ten_hoat_dong}</b><br>Hệ thống sẽ yêu cầu quyền Định vị (GPS) để xác minh vị trí của bạn.`;
+                msvInput.value = ''; msvInput.disabled = false; btnSubmit.disabled = false; btnSubmit.innerHTML = 'Check-in Ngay';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadActiveSession);
+
+        async function submitAttendance() {
+            if (!selectedSession) return;
+
+            const msvInput = document.getElementById('msvInput');
+            const msv = msvInput.value.trim();
+            if(!msv) return showResultModal('error', 'Vui lòng nhập Mã Sinh Viên (MSSV) của bạn!');
+            
+            try {
+                const res = await fetch(`${API_URL_BASE}/members`);
+                const members = await res.json();
+                const checkMember = members.find(m => m.mssv === msv);
+
+                if(!checkMember) return showResultModal('error', 'Mã Sinh Viên không tồn tại trong hệ thống. Vui lòng kiểm tra lại <b>MSSV</b> hoặc báo BCN!');
+
+                if (!navigator.geolocation) return showResultModal('error', 'Trình duyệt của bạn không hỗ trợ định vị GPS!');
+                showResultModal('loading', '');
+
+                navigator.geolocation.getCurrentPosition(async (position) => {
+                    const userLat = position.coords.latitude; const userLng = position.coords.longitude; const accuracy = position.coords.accuracy;
+                    const targetLat = parseFloat(String(selectedSession.vi_do).replace(',', '.'));
+                    const targetLng = parseFloat(String(selectedSession.kinh_do).replace(',', '.'));
+                    const radius = parseFloat(selectedSession.ban_kinh);
+                    const distance = calculateDistance(userLat, userLng, targetLat, targetLng);
+
+                    let errorAdvice = '';
+                    if (accuracy > 100) errorAdvice = `<br><br><span style="color: #ea580c; font-weight: 600;">⚠️ Tín hiệu GPS rất yếu (Sai số: ${Math.round(accuracy)}m).</span><br>Hãy bật Wi-Fi (không cần kết nối) hoặc ra không gian mở, chờ 5s và thử lại!`;
+                    else if (distance > radius && distance > 5000) errorAdvice = `<br><br><span style="color: #ea580c;">⚠️ Quá xa! Vui lòng báo Admin kiểm tra lại tọa độ gốc.</span>`;
+
+                    if (distance <= radius) {
+                        try {
+                            await fetch(`${API_URL_BASE}/attendance/${selectedSession.id}/bulk`, {
+                                method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ records: [{ mssv: msv, trang_thai: 'Có mặt' }] })
+                            });
+                            localStorage.setItem(`checkedIn_session_${selectedSession.id}`, msv);
+                            showResultModal('success', `Đã ghi nhận có mặt cho: <br><b style="color: var(--primary); font-size: 18px;">${checkMember.ho_ten} (${checkMember.mssv})</b><br><br><span style="font-size:13px;color:gray">Khoảng cách xác minh: ${distance.toFixed(1)}m (Cho phép: ${radius}m)</span><br><br>Chúc bạn sinh hoạt vui vẻ! 🥰`);
+                            checkSessionLock(selectedSession);
+                        } catch (apiErr) { showResultModal('error', 'Lỗi cập nhật máy chủ!'); }
+                    } else { showResultModal('error', `Bạn đang không ở trong phạm vi điểm danh!<br><br>Khoảng cách: <b>${distance.toFixed(1)} mét</b> (Cho phép: <b>${radius} mét</b>).${errorAdvice}`); }
+                }, (error) => {
+                    let msg = "Không thể lấy vị trí. Bật Định Vị (Location) hoặc cấp quyền trình duyệt rồi thử lại!";
+                    if (error.code === error.TIMEOUT) msg = "Quá thời gian kết nối vệ tinh. Hãy bật Wi-Fi để hỗ trợ định vị!";
+                    showResultModal('error', msg);
+                }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+            } catch(error) { showResultModal('error', 'Không thể kết nối đến máy chủ!'); }
+        }
+
+        function showResultModal(type, message) {
+            document.getElementById('modalResult').style.display = 'flex';
+            document.getElementById('resultLoading').style.display = 'none';
+            document.getElementById('resultSuccess').style.display = 'none';
+            document.getElementById('resultError').style.display = 'none';
+            if (type === 'loading') document.getElementById('resultLoading').style.display = 'block';
+            else if (type === 'success') { document.getElementById('resultSuccess').style.display = 'block'; document.getElementById('successMsg').innerHTML = message; }
+            else { document.getElementById('resultError').style.display = 'block'; document.getElementById('errorMsg').innerHTML = message; }
+        }
+        function closeResultModal() { document.getElementById('modalResult').style.display = 'none'; }
+        function openFeedback() { document.getElementById('modalFeedback').style.display = 'flex'; }
+        function closeFeedback() { document.getElementById('modalFeedback').style.display = 'none'; }
+        async function submitFeedback() {
+            const inputs = document.querySelectorAll('#modalFeedback .form-input');
+            const name = inputs[0].value.trim() || 'Thành viên ẩn danh'; const content = inputs[1].value.trim();
+            if(!content) return alert("Vui lòng nhập nội dung góp ý!");
+            try { await fetch(`${API_URL_BASE}/suggestions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nguoi_gui: name, noi_dung: content }) }); alert("Cảm ơn bạn!"); closeFeedback(); inputs[0].value = ''; inputs[1].value = ''; } catch (e) { alert("Lỗi kết nối máy chủ!"); }
+        }
+        function openHistoryModal(e) { if(e) e.preventDefault(); document.getElementById('modalHistoryClub').style.display = 'flex'; loadOrgTree(); }
+        function closeHistoryModal() { document.getElementById('modalHistoryClub').style.display = 'none'; }
+        async function loadOrgTree() {
+            try {
+                const res = await fetch(`${API_URL_BASE}/board`); const boardData = await res.json();
+                if (boardData.length === 0) return;
+                const currentBoard = boardData.filter(b => b.nhiem_ky === boardData[0].nhiem_ky);
+                const getMember = (chuc_vu, ban = null) => { const member = currentBoard.find(m => m.chuc_vu === chuc_vu && (!ban || m.ban_phu_trach === ban)); return member ? `<span class="node-name">${member.ho_ten}</span><span class="node-role">${member.chuc_vu}</span>` : `<span class="node-name" style="color:#94a3b8">Đang trống</span><span class="node-role">${chuc_vu}</span>`; };
+                const getPhobans = (ban) => { const phobans = currentBoard.filter(m => m.chuc_vu === 'Phó ban' && m.ban_phu_trach === ban); let html = ''; phobans.forEach(pb => { html += `<li><div class="node-box sub"><span class="node-name">${pb.ho_ten}</span><span class="node-role">Phó ban ${ban === 'Truyền thông' ? 'TT' : ban === 'Chuyên môn' ? 'CM' : 'KN'}</span></div></li>`; }); return html; };
+                document.querySelector('.org-tree').innerHTML = `<ul><li><div class="node-box chief">${getMember('Chủ nhiệm')}</div><ul><li><div class="node-box vice">${getMember('Phó Chủ nhiệm')}</div><ul><li><div class="node-box member">${getMember('Ủy viên Trưởng ban', 'Truyền thông')}</div><ul>${getPhobans('Truyền thông')}</ul></li><li><div class="node-box member">${getMember('Ủy viên Trưởng ban', 'Kỹ năng')}</div><ul>${getPhobans('Kỹ năng')}</ul></li><li><div class="node-box member">${getMember('Ủy viên Trưởng ban', 'Chuyên môn')}</div><ul>${getPhobans('Chuyên môn')}</ul></li></ul></li></ul></li></ul>`;
+            } catch (error) {}
+        }
+        window.onclick = function(event) { if (event.target == document.getElementById('modalFeedback')) closeFeedback(); if (event.target == document.getElementById('modalHistoryClub')) closeHistoryModal(); if (event.target == document.getElementById('modalResult')) closeResultModal(); }
+    </script>
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ban Chủ nhiệm - CLB IP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary: #0f4c81; --primary-light: #2d73b3; --secondary: #f0f4f8; --text-main: #1e293b; --text-muted: #64748b; --bg: #f8fafc; --white: #ffffff; --border: #e2e8f0; --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); --danger: #ef4444; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { display: flex; min-height: 100vh; background-color: var(--bg); color: var(--text-main); }
+        
+        .sidebar { width: 260px; background: var(--white); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-header { padding: 24px 20px; text-align: center; border-bottom: 1px solid var(--border); }
+        .sidebar-header h2 { color: var(--primary); font-size: 22px; font-weight: 700; }
+        .sidebar-menu { padding: 16px 12px; flex: 1; }
+        .sidebar-menu a { display: flex; align-items: center; gap: 12px; color: var(--text-muted); text-decoration: none; padding: 12px 16px; border-radius: 8px; margin-bottom: 4px; font-weight: 500; transition: all 0.2s; }
+        .sidebar-menu a:hover { background: var(--secondary); color: var(--primary); }
+        .sidebar-menu a.active { background: var(--primary); color: var(--white); box-shadow: 0 4px 6px -1px rgba(15, 76, 129, 0.2); }
+        .sidebar-menu a i { font-size: 18px; width: 24px; text-align: center; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; overflow-x: hidden; }
+        .top-navbar { background: var(--white); padding: 16px 32px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
+        .page-title { font-size: 20px; font-weight: 600; }
+        
+        .term-filter { padding: 8px 16px; border-radius: 8px; border: 2px solid var(--primary-light); font-weight: 600; color: var(--primary); outline: none; background: var(--secondary); cursor: pointer; }
+
+        .content-body { padding: 32px; flex: 1; }
+        .action-bar { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-bottom: 24px; }
+        
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: var(--primary); color: var(--white); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 14px; }
+        .btn:hover { background: var(--primary-light); transform: translateY(-1px); }
+
+        .tree-container { background: var(--white); padding: 40px 20px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 32px; overflow-x: auto; }
+        .org-tree { display: flex; flex-direction: column; align-items: center; min-width: 900px; }
+        .node { background: var(--white); border: 2px solid var(--primary-light); border-radius: 10px; padding: 16px; width: 190px; text-align: center; position: relative; box-shadow: var(--shadow); margin: 0 12px; transition: transform 0.2s; }
+        .node:hover { transform: translateY(-3px); border-color: var(--primary); }
+        .node .role { font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .node .name { font-size: 15px; font-weight: 600; color: var(--text-main); }
+        .node .mssv { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+        .node.empty { border: 2px dashed #cbd5e1; background: #f8fafc; box-shadow: none; }
+        .node.empty .name { color: #94a3b8; font-style: italic; font-weight: 400; }
+        
+        .tree-level { display: flex; justify-content: center; position: relative; padding-top: 35px; width: 100%; }
+        .tree-level::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid var(--primary-light); width: 0; height: 35px; transform: translateX(-50%); }
+        .tree-level.root::before { display: none; }
+        
+        .departments { display: flex; justify-content: space-around; width: 100%; margin-top: 35px; position: relative; }
+        .departments::before { content: ''; position: absolute; top: -35px; left: 16.5%; right: 16.5%; border-top: 2px solid var(--primary-light); }
+        .branch { display: flex; flex-direction: column; align-items: center; position: relative; width: 33%; }
+        .branch::before { content: ''; position: absolute; top: -35px; left: 50%; border-left: 2px solid var(--primary-light); width: 0; height: 35px; transform: translateX(-50%); }
+        
+        .sub-branch { display: flex; justify-content: center; gap: 15px; margin-top: 30px; position: relative; }
+        .sub-branch::before { content: ''; position: absolute; top: -15px; left: 25%; right: 25%; border-top: 2px solid var(--primary-light); }
+        .sub-branch .node { width: 140px; padding: 12px; }
+        .sub-branch .node::before { content: ''; position: absolute; top: -15px; left: 50%; border-left: 2px solid var(--primary-light); width: 0; height: 15px; transform: translateX(-50%); }
+
+        .table-container { background: var(--white); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        th { background: #f8fafc; font-weight: 600; color: var(--text-muted); font-size: 13px; text-transform: uppercase; }
+        td { font-size: 14px; vertical-align: middle; }
+
+        .btn-action { background: none; border: none; cursor: pointer; padding: 8px; border-radius: 6px; transition: 0.2s; font-size: 16px; margin-right: 5px; }
+        .btn-edit { color: var(--primary); }
+        .btn-edit:hover { background: #e0f2fe; }
+        .btn-delete { color: var(--danger); }
+        .btn-delete:hover { background: #fee2e2; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: var(--white); padding: 32px; border-radius: 16px; width: 450px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px; }
+        .form-control { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 6px; outline: none; }
+        .form-control:focus { border-color: var(--primary); }
+
+        footer { padding: 20px; text-align: center; font-size: 13px; color: var(--text-muted); border-top: 1px solid var(--border); background: var(--white); margin-top: auto; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header"><h2>CLB IP ADMIN</h2></div>
+        <div class="sidebar-menu">
+            <a href="../trang_chu.html"><i class="fas fa-chart-pie"></i> Trang Chủ</a>
+            <a href="quan_ly_thanh_vien.html"><i class="fas fa-users"></i> Thành Viên</a>
+            <a href="quan_ly_quy.html"><i class="fas fa-wallet"></i> Quỹ CLB</a>
+            <a href="quan_ly_tai_lieu.html"><i class="fas fa-folder-open"></i> Tài Liệu</a>
+            <a href="quan_ly_ke_hoach.html"><i class="fas fa-calendar-alt"></i> Kế Hoạch</a>
+            <a href="quan_ly_diem_danh.html"><i class="fas fa-clipboard-check"></i> Điểm Danh</a>
+            <a href="quan_ly_bcn.html" class="active"><i class="fas fa-sitemap"></i> Ban Chủ Nhiệm</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-navbar">
+            <h1 class="page-title">Sơ Đồ Ban Chủ Nhiệm</h1>
+            <select id="termSelector" class="term-filter" onchange="renderUI()"></select>
+        </div>
+        
+        <div class="content-body">
+            <div class="action-bar">
+                <button class="btn" id="btnAddMember" onclick="openBoardModal()">
+                    <i class="fas fa-user-plus"></i> Bổ Nhiệm Nhân Sự
+                </button>
+            </div>
+
+            <div class="tree-container">
+                <div id="treeView" class="org-tree"></div>
+            </div>
+
+            <h2 style="font-size: 18px; margin-bottom: 15px; color: var(--text-main);">Danh Sách Chi Tiết</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nhiệm kỳ</th>
+                            <th>MSSV</th>
+                            <th>Họ và tên</th>
+                            <th>Chức vụ</th>
+                            <th>Ban phụ trách</th>
+                            <th style="text-align: center;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="boardTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer>
+            @2026 Bản quyền thuộc về CLB IP<br>Khoa Tin học - Trường Đại học Sư phạm Huế
+        </footer>
+    </div>
+
+    <div class="modal" id="modalBoard">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Bổ Nhiệm Nhân Sự BCN</h2>
+                <button class="close-btn" onclick="document.getElementById('modalBoard').style.display='none'"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="boardForm">
+                <div class="form-group"><label>Nhiệm kỳ (VD: 2025-2026)</label><input type="text" class="form-control" id="nhiem_ky" required></div>
+                <div class="form-group"><label>Chọn Thành viên</label>
+                    <select class="form-control" id="thanh_vien_id" required><option value="">Đang tải...</option></select>
+                </div>
+                <div class="form-group"><label>Chức vụ</label>
+                    <select class="form-control" id="chuc_vu" required>
+                        <option value="Chủ nhiệm">Chủ nhiệm</option>
+                        <option value="Phó Chủ nhiệm">Phó Chủ nhiệm</option>
+                        <option value="Ủy viên Trưởng ban">Ủy viên Trưởng ban</option>
+                        <option value="Phó ban">Phó ban</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Ban phụ trách</label>
+                    <select class="form-control" id="ban_phu_trach">
+                        <option value="Chung">Chung (Chủ nhiệm/Phó CN)</option>
+                        <option value="Truyền thông">Truyền thông</option>
+                        <option value="Chuyên môn">Chuyên môn</option>
+                        <option value="Kỹ năng">Kỹ năng</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Lưu Thông Tin</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let allBoardData = [];
+        let currentEditId = null; 
+
+        async function loadData() {
+            try {
+                const res = await fetch('http://localhost:3000/api/board');
+                if(!res.ok) throw new Error();
+                allBoardData = await res.json();
+                
+                const terms = [...new Set(allBoardData.map(item => item.nhiem_ky))];
+                const selector = document.getElementById('termSelector');
+                const currentSelection = selector.value;
+                selector.innerHTML = '';
+                
+                if(terms.length > 0) {
+                    terms.forEach(term => { 
+                        const isSelected = (term === currentSelection) ? 'selected' : '';
+                        selector.innerHTML += `<option value="${term}" ${isSelected}>Nhiệm kỳ: ${term}</option>`; 
+                    });
+                    renderUI();
+                } else {
+                    selector.innerHTML = `<option value="">Chưa có dữ liệu</option>`;
+                    document.getElementById('treeView').innerHTML = '<p style="color:var(--text-muted);">Chưa có dữ liệu sơ đồ cây.</p>';
+                    document.getElementById('boardTable').innerHTML = '<tr><td colspan="6" style="text-align:center;">Trống</td></tr>';
+                }
+            } catch (err) { 
+                document.getElementById('treeView').innerHTML = '<p style="color:var(--danger); font-weight:bold;"><i class="fas fa-wifi"></i> Mất kết nối máy chủ.</p>';
+                document.getElementById('boardTable').innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--danger); font-weight:bold;">Mất kết nối máy chủ!</td></tr>';
+            }
+        }
+
+        function renderUI() {
+            const currentTerm = document.getElementById('termSelector').value;
+            if(!currentTerm) return;
+            const termData = allBoardData.filter(item => item.nhiem_ky === currentTerm);
+            drawTable(termData); drawTree(termData);
+        }
+
+        function drawTable(data) {
+            const tbody = document.getElementById('boardTable');
+            tbody.innerHTML = '';
+            data.forEach(item => {
+                const editBtn = `<button class="btn-action btn-edit" onclick="openBoardModal(${item.id})" title="Sửa"><i class="fas fa-edit"></i></button>`;
+                const delBtn = `<button class="btn-action btn-delete" onclick="deleteBoardMember(${item.id})" title="Xóa"><i class="fas fa-trash"></i></button>`;
+
+                tbody.innerHTML += `<tr>
+                    <td><b>${item.nhiem_ky}</b></td>
+                    <td>${item.mssv || '-'}</td>
+                    <td>${item.ho_ten || '-'}</td>
+                    <td><span style="color:var(--primary); font-weight:600">${item.chuc_vu}</span></td>
+                    <td>${item.ban_phu_trach}</td>
+                    <td style="text-align: center; white-space: nowrap;">${editBtn} ${delBtn}</td>
+                </tr>`;
+            });
+        }
+
+        function createNodeHTML(roleTitle, personData) {
+            if (personData) return `<div class="node"><div class="role">${roleTitle}</div><div class="name">${personData.ho_ten}</div><div class="mssv">${personData.mssv}</div></div>`;
+            return `<div class="node empty"><div class="role">${roleTitle}</div><div class="name">Đang trống</div></div>`;
+        }
+
+        function drawTree(data) {
+            const chuNhiem = data.find(p => p.chuc_vu === 'Chủ nhiệm');
+            const phobCN = data.find(p => p.chuc_vu === 'Phó Chủ nhiệm');
+            const trTruyenThong = data.find(p => p.chuc_vu === 'Ủy viên Trưởng ban' && p.ban_phu_trach === 'Truyền thông');
+            const phoTruyenThong = data.filter(p => p.chuc_vu === 'Phó ban' && p.ban_phu_trach === 'Truyền thông');
+            const trChuyenMon = data.find(p => p.chuc_vu === 'Ủy viên Trưởng ban' && p.ban_phu_trach === 'Chuyên môn');
+            const phoChuyenMon = data.filter(p => p.chuc_vu === 'Phó ban' && p.ban_phu_trach === 'Chuyên môn');
+            const trKyNang = data.find(p => p.chuc_vu === 'Ủy viên Trưởng ban' && p.ban_phu_trach === 'Kỹ năng');
+            const phoKyNang = data.filter(p => p.chuc_vu === 'Phó ban' && p.ban_phu_trach === 'Kỹ năng');
+
+            document.getElementById('treeView').innerHTML = `
+                <div class="tree-level root">${createNodeHTML('Chủ Nhiệm', chuNhiem)}</div>
+                <div class="tree-level">${createNodeHTML('Phó Chủ Nhiệm', phobCN)}</div>
+                <div class="departments">
+                    <div class="branch">
+                        ${createNodeHTML('Trưởng ban Truyền thông', trTruyenThong)}
+                        <div class="sub-branch">${createNodeHTML('Phó ban', phoTruyenThong[0])}${createNodeHTML('Phó ban', phoTruyenThong[1])}</div>
+                    </div>
+                    <div class="branch">
+                        ${createNodeHTML('Trưởng ban Chuyên môn', trChuyenMon)}
+                        <div class="sub-branch">${createNodeHTML('Phó ban', phoChuyenMon[0])}${createNodeHTML('Phó ban', phoChuyenMon[1])}</div>
+                    </div>
+                    <div class="branch">
+                        ${createNodeHTML('Trưởng ban Kỹ năng', trKyNang)}
+                        <div class="sub-branch">${createNodeHTML('Phó ban', phoKyNang[0])}${createNodeHTML('Phó ban', phoKyNang[1])}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function openBoardModal(editId = null) {
+            document.getElementById('modalBoard').style.display = 'flex';
+            
+            try {
+                const res = await fetch('http://localhost:3000/api/members');
+                const members = await res.json();
+                const select = document.getElementById('thanh_vien_id');
+                select.innerHTML = '<option value="">-- Chọn thành viên --</option>';
+                members.forEach(m => { select.innerHTML += `<option value="${m.id}">${m.mssv} - ${m.ho_ten}</option>`; });
+            } catch(e) {}
+
+            if (editId) {
+                currentEditId = editId;
+                document.getElementById('modalTitle').innerText = "Cập Nhật Thông Tin BCN";
+                const editItem = allBoardData.find(x => x.id === editId);
+                
+                document.getElementById('nhiem_ky').value = editItem.nhiem_ky;
+                document.getElementById('thanh_vien_id').value = editItem.thanh_vien_id;
+                document.getElementById('chuc_vu').value = editItem.chuc_vu;
+                document.getElementById('ban_phu_trach').value = editItem.ban_phu_trach;
+            } else {
+                currentEditId = null;
+                document.getElementById('modalTitle').innerText = "Bổ Nhiệm Nhân Sự BCN";
+                document.getElementById('boardForm').reset();
+                const currentTerm = document.getElementById('termSelector').value;
+                // FIX LỖI 6: Xử lý giá trị mặc định cho ô nhiệm kỳ, tránh lưu chữ "Chưa có dữ liệu"
+                if(currentTerm && currentTerm !== 'Chưa có dữ liệu' && currentTerm !== '') {
+                    document.getElementById('nhiem_ky').value = currentTerm;
+                } else {
+                    const yr = new Date().getFullYear();
+                    document.getElementById('nhiem_ky').value = `${yr}-${yr+1}`;
+                }
+            }
+        }
+
+        document.getElementById('boardForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                nhiem_ky: document.getElementById('nhiem_ky').value, thanh_vien_id: document.getElementById('thanh_vien_id').value,
+                chuc_vu: document.getElementById('chuc_vu').value, ban_phu_trach: document.getElementById('ban_phu_trach').value
+            };
+            const url = currentEditId ? `http://localhost:3000/api/board/${currentEditId}` : 'http://localhost:3000/api/board';
+            const method = currentEditId ? 'PUT' : 'POST';
+
+            try {
+                await fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                document.getElementById('modalBoard').style.display = 'none'; loadData(); 
+            } catch (err) { alert('Lỗi kết nối máy chủ!'); }
+        });
+
+        async function deleteBoardMember(id) {
+            if(confirm("Bạn có chắc chắn muốn xóa thành viên này khỏi Ban Chủ nhiệm?")) {
+                try { await fetch(`http://localhost:3000/api/board/${id}`, { method: 'DELETE' }); loadData(); } catch (err) { alert('Lỗi khi xóa!'); }
+            }
+        }
+
+        window.onload = loadData;
+    </script>
+</body>
+</html>

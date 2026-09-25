@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Quỹ CLB - CLB IP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        :root { --primary: #0f4c81; --primary-light: #2d73b3; --secondary: #f0f4f8; --text-main: #1e293b; --text-muted: #64748b; --bg: #f8fafc; --white: #ffffff; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --border: #e2e8f0; --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { display: flex; min-height: 100vh; background-color: var(--bg); color: var(--text-main); }
+        .sidebar { width: 260px; background: var(--white); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .sidebar-header { padding: 24px 20px; text-align: center; border-bottom: 1px solid var(--border); }
+        .sidebar-header h2 { color: var(--primary); font-size: 22px; font-weight: 700; }
+        .sidebar-menu { padding: 16px 12px; flex: 1; }
+        .sidebar-menu a { display: flex; align-items: center; gap: 12px; color: var(--text-muted); text-decoration: none; padding: 12px 16px; border-radius: 8px; margin-bottom: 4px; font-weight: 500; transition: all 0.2s; }
+        .sidebar-menu a:hover { background: var(--secondary); color: var(--primary); }
+        .sidebar-menu a.active { background: var(--primary); color: var(--white); box-shadow: 0 4px 6px -1px rgba(15, 76, 129, 0.2); }
+        .main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
+        .top-navbar { background: var(--white); padding: 16px 32px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+        .page-title { font-size: 20px; font-weight: 600; }
+        .content-body { padding: 32px; flex: 1; }
+        .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: var(--primary); color: var(--white); border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; }
+        .btn-success { background: var(--success); }
+        .btn-warning { background: var(--warning); color: #fff; }
+        .btn-excel { background: transparent; border: 1px solid var(--success); color: var(--success); }
+        .btn-danger { background: var(--danger); }
+        .stat-container { display: flex; gap: 24px; margin-bottom: 32px; }
+        .stat-box { flex: 1; background: var(--white); padding: 24px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); border-left: 5px solid var(--primary); }
+        .stat-box.success { border-left-color: var(--success); }
+        .stat-box h3 { font-size: 14px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+        .stat-box .value { font-size: 28px; font-weight: 700; color: var(--text-main); margin-top: 8px; }
+        .fund-card { background: var(--white); border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); margin-bottom: 32px; overflow: hidden; transition: all 0.3s; }
+        .fund-header { padding: 20px 24px; border-bottom: 1px solid var(--border); background: var(--secondary); transition: all 0.3s; }
+        .fund-header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .fund-header-bottom { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+        .fund-title { font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 4px; text-transform: uppercase; }
+        .fund-date { font-size: 14px; color: var(--text-muted); font-weight: 500; }
+        .search-fund { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; outline: none; width: 250px; font-size: 13px; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 14px 24px; border-bottom: 1px solid var(--border); }
+        th { background: #f8fafc; font-weight: 600; color: var(--text-muted); font-size: 13px; text-transform: uppercase; }
+        td { font-size: 14px; vertical-align: middle; }
+        .fund-footer { padding: 16px 24px; background: #f8fafc; border-top: 1px solid var(--border); text-align: right; font-size: 16px; font-weight: 600; color: var(--text-main); }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .badge-cash { background: #dcfce7; color: #16a34a; }
+        .badge-transfer { background: #e0e7ff; color: #4338ca; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: var(--white); padding: 32px; border-radius: 16px; width: 480px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px; }
+        .form-control { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 6px; outline: none; }
+        .select2-container--default .select2-selection--single { height: 40px; border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: center; font-size: 14px;}
+        
+        .fund-card.locked-card { border-color: var(--warning); }
+        .fund-card.locked-card .fund-header { background: #fffbeb; border-bottom-color: var(--warning); }
+        .fund-card.locked-card .fund-title { color: #d97706; }
+        
+        .swal2-styled.swal2-confirm { background-color: var(--primary) !important; }
+        .swal2-styled.swal2-cancel { background-color: var(--text-muted) !important; }
+        .swal2-styled.swal2-deny { background-color: var(--danger) !important; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header"><h2>CLB IP ADMIN</h2></div>
+        <div class="sidebar-menu">
+            <a href="../trang_chu.html"><i class="fas fa-chart-pie"></i> Trang Chủ</a>
+            <a href="quan_ly_thanh_vien.html"><i class="fas fa-users"></i> Thành Viên</a>
+            <a href="quan_ly_quy.html" class="active"><i class="fas fa-wallet"></i> Quỹ CLB</a>
+            <a href="quan_ly_tai_lieu.html"><i class="fas fa-folder-open"></i> Tài Liệu</a>
+            <a href="quan_ly_ke_hoach.html"><i class="fas fa-calendar-alt"></i> Kế Hoạch</a>
+            <a href="quan_ly_diem_danh.html"><i class="fas fa-clipboard-check"></i> Điểm Danh</a>
+            <a href="quan_ly_bcn.html"><i class="fas fa-sitemap"></i> Ban Chủ Nhiệm</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-navbar"><h1 class="page-title">Quản Lý Quỹ CLB</h1></div>
+        <div class="content-body">
+            <div class="stat-container">
+                <div class="stat-box">
+                    <h3>Số Lượng Chương Trình Quỹ & Kế hoạch</h3>
+                    <div class="value" id="totalPrograms">0</div>
+                </div>
+                <div class="stat-box success">
+                    <h3>Tổng Số Dư Hiện Tại</h3>
+                    <div class="value" id="globalBalance" style="color: var(--success);">0 đ</div>
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <button class="btn" onclick="openFundModal()"><i class="fas fa-plus-circle"></i> Tạo Quỹ Thu</button>
+            </div>
+            <div id="fundsContainer"></div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="modalCreateFund">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Tạo Chương Trình Quỹ</h2>
+                <button class="close-btn" onclick="closeModal('modalCreateFund')"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="createFundForm">
+                <div class="form-group"><label>Tên chương trình quỹ</label><input type="text" class="form-control" id="ten_chuong_trinh" required></div>
+                <div class="form-group"><label>Ngày thu quỹ</label><input type="date" class="form-control" id="ngay_thu_quy" required></div>
+                <button type="submit" class="btn" style="width: 100%; justify-content: center; padding: 12px 0;">Tạo Mới</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="modalAddEntry">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Thêm Khoản Thu</h2>
+                <button class="close-btn" onclick="closeModal('modalAddEntry')"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="addEntryForm">
+                <input type="hidden" id="target_fund_name">
+                <input type="hidden" id="target_fund_date">
+                <div class="form-group">
+                    <label>Người nộp</label>
+                    <select class="form-control" id="entry_member" style="width: 100%;"></select>
+                    <input type="text" class="form-control" id="entry_member_other" style="display:none; margin-top: 8px;" placeholder="Nhập tên người ủng hộ/Tổ chức ngoài...">
+                </div>
+                <div class="form-group"><label>Số tiền (VNĐ)</label><input type="number" class="form-control" id="entry_amount" min="0" required></div>
+                <div class="form-group"><label>Hình thức</label><select class="form-control" id="entry_method" required><option value="Tiền mặt">Tiền mặt</option><option value="Chuyển khoản">Chuyển khoản</option></select></div>
+                <div class="form-group"><label>Ghi chú</label><input type="text" class="form-control" id="entry_note"></div>
+                <button type="submit" class="btn btn-success" style="width: 100%; justify-content: center; padding: 12px 0;">Xác nhận thu</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const formatMoney = (amount) => new Intl.NumberFormat('vi-VN').format(amount);
+        let allMembers = [];
+        let globalFunds = []; 
+        let lockedFundsList = [];
+
+        async function loadMembers() {
+            try {
+                const res = await fetch('http://localhost:3000/api/members');
+                if (res.ok) {
+                    allMembers = await res.json();
+                    const select = $('#entry_member');
+                    select.empty().append('<option value="">-- Chọn thành viên --</option>');
+                    allMembers.forEach(m => select.append(`<option value="${m.mssv}">${m.mssv} - ${m.ho_ten}</option>`));
+                    select.append('<option value="Khác">Khác (Nhập tên người ngoài/ủng hộ...)</option>');
+                }
+            } catch(e) { }
+        }
+
+        async function loadFunds() {
+            try {
+                // Tải trạng thái khóa quỹ từ Database Server (Fix lỗi 1)
+                const resSet = await fetch('http://localhost:3000/api/settings/locked_funds');
+                if(resSet.ok) {
+                    const setObj = await resSet.json();
+                    if(setObj.gia_tri) lockedFundsList = JSON.parse(setObj.gia_tri);
+                }
+
+                const resFunds = await fetch('http://localhost:3000/api/funds');
+                if (resFunds.ok) {
+                    const flatFunds = await resFunds.json();
+                    let grouped = {};
+                    flatFunds.filter(f => f.loai_gd === 'Thu').forEach(f => {
+                        // Nhóm quỹ bằng Tên + Ngày để tránh gộp sai khi trùng tên (Fix lỗi 2)
+                        let groupKey = f.noi_dung + '|' + f.ngay_gd;
+                        if (!grouped[groupKey]) grouped[groupKey] = { ten_quy: f.noi_dung, ngay_thu: f.ngay_gd, groupKey: groupKey, entries: [] };
+                        grouped[groupKey].entries.push({ id: f.id, member_name: f.nguoi_thuc_hien, amount: f.so_tien, method: f.ghi_chu.split(' - ')[0], note: f.ghi_chu.split(' - ')[1] || '' });
+                    });
+                    
+                    let localEmptyFunds = globalFunds.filter(f => f.isLocal && f.entries.length === 0);
+                    const existKeys = Object.keys(grouped);
+                    localEmptyFunds = localEmptyFunds.filter(f => !existKeys.includes(f.groupKey));
+                    
+                    globalFunds = [...localEmptyFunds, ...Object.values(grouped)];
+                    renderAllFunds();
+                }
+            } catch (e) { 
+                document.getElementById('fundsContainer').innerHTML = '<div style="text-align:center; padding:40px; color:var(--danger); font-weight:600;"><i class="fas fa-exclamation-triangle fa-2x"></i><br><br>Mất kết nối đến máy chủ. Không thể tải dữ liệu!</div>';
+            }
+        }
+
+        async function renderAllFunds() {
+            const container = document.getElementById('fundsContainer');
+            container.innerHTML = '';
+
+            globalFunds.forEach(fund => {
+                const isLocked = lockedFundsList.includes(fund.groupKey);
+                let fundTotal = 0;
+                let tbodyHTML = '';
+                
+                if(fund.entries.length === 0) {
+                    tbodyHTML = `<tr><td colspan="6" style="text-align:center; padding: 30px; color: var(--text-muted);">Quỹ trống. Chưa có dữ liệu đóng tiền.</td></tr>`;
+                } else {
+                    fund.entries.forEach((e, i) => {
+                        fundTotal += Number(e.amount);
+                        
+                        let actionHTML = isLocked 
+                            ? `<span style="color:var(--text-muted); font-size:12px;"><i class="fas fa-lock"></i> Đã khóa</span>`
+                            : `<button class="btn btn-danger" style="padding: 6px 10px;" onclick="deleteEntry(${e.id})"><i class="fas fa-trash"></i></button>`;
+                            
+                        tbodyHTML += `<tr><td style="text-align: center;">${i+1}</td><td><b>${e.member_name}</b></td><td style="color:var(--primary); font-weight:600;">${formatMoney(e.amount)} đ</td><td><span class="badge ${e.method.includes('Tiền mặt')?'badge-cash':'badge-transfer'}">${e.method}</span></td><td>${e.note}</td><td style="text-align: center;">${actionHTML}</td></tr>`;
+                    });
+                }
+                const fDate = fund.ngay_thu ? new Date(fund.ngay_thu).toLocaleDateString('vi-VN') : '';
+                
+                let headerButtons = isLocked 
+                    ? `<div style="color: #d97706; font-weight: bold; margin-right: 15px; display: flex; align-items: center; gap: 6px;"><i class="fas fa-lock"></i> Đã chốt sổ</div>
+                       <button class="btn" style="background: transparent; color: var(--text-muted); border: 1px solid var(--border);" onclick="unlockFund('${fund.groupKey}')"><i class="fas fa-unlock"></i> Mở khóa quỹ</button>`
+                    : `<button class="btn btn-warning" onclick="lockFund('${fund.groupKey}')"><i class="fas fa-lock"></i> Khóa sổ</button>
+                       <button class="btn btn-danger" onclick="deleteFund('${fund.groupKey}')"><i class="fas fa-trash-alt"></i> Xóa bảng</button>
+                       <button class="btn btn-success" onclick="openEntryModal('${fund.ten_quy}', '${fund.ngay_thu}')"><i class="fas fa-plus"></i> Thêm Thu</button>`;
+                
+                container.innerHTML += `
+                    <div class="fund-card ${isLocked ? 'locked-card' : ''}">
+                        <div class="fund-header">
+                            <div class="fund-header-top">
+                                <div>
+                                    <div class="fund-title">[THU] ${fund.ten_quy} ${isLocked ? ' <i class="fas fa-lock" style="font-size: 14px; margin-left: 5px;"></i>' : ''}</div>
+                                    <div class="fund-date">Ngày thu: ${fDate}</div>
+                                </div>
+                            </div>
+                            <div class="fund-header-bottom">
+                                ${headerButtons}
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="text-align:center;">STT</th>
+                                        <th>Người nộp</th>
+                                        <th>Số tiền</th>
+                                        <th>Hình thức</th>
+                                        <th>Ghi chú</th>
+                                        <th style="text-align:center;">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${tbodyHTML}</tbody>
+                            </table>
+                        </div>
+                        <div class="fund-footer">Tổng số tiền quỹ: <span class="fund-total-amount">${formatMoney(fundTotal)} đ</span></div>
+                    </div>`;
+            });
+
+            try {
+                const resPlans = await fetch('http://localhost:3000/api/plans');
+                if (resPlans.ok) {
+                    const plans = await resPlans.json();
+                    plans.filter(p => p.tong_kinh_phi > 0).forEach(plan => {
+                        let tbodyHTML = '';
+                        if(!plan.items || plan.items.length === 0) tbodyHTML = `<tr><td colspan="5" style="text-align:center;">Không có dữ liệu</td></tr>`;
+                        else {
+                            plan.items.forEach((item, i) => {
+                                tbodyHTML += `<tr><td style="text-align: center;">${i+1}</td><td><b>Chi: ${item.noi_dung_chi}</b></td><td style="color:var(--danger); font-weight:600;">${formatMoney(item.thanh_tien)} đ</td><td><span class="badge badge-transfer">Kế hoạch</span></td><td>${item.ghi_chu || ''}</td></tr>`;
+                            });
+                        }
+                        const fDate = plan.thoi_gian ? new Date(plan.thoi_gian).toLocaleDateString('vi-VN') : '';
+                        container.innerHTML += `<div class="fund-card" style="border-color: var(--danger);"><div class="fund-header" style="background: #fee2e2; border-bottom-color: var(--danger);"><div class="fund-header-top"><div><div class="fund-title" style="color: var(--danger);">[QUỸ CHI] Kế hoạch: ${plan.ten_hoat_dong}</div><div class="fund-date">Thời gian: ${fDate}</div></div></div></div><div class="table-container"><table><thead><tr><th style="text-align:center;">STT</th><th>Nội dung chi</th><th>Số tiền</th><th>Hình thức</th><th>Ghi chú</th></tr></thead><tbody>${tbodyHTML}</tbody></table></div><div class="fund-footer" style="background:#fff5f5; color:var(--danger);">Tổng xuất quỹ: <span class="fund-total-amount" style="color:var(--danger);">${formatMoney(plan.tong_kinh_phi)} đ</span></div></div>`;
+                    });
+                }
+            } catch (e) {}
+
+            document.getElementById('totalPrograms').innerText = document.querySelectorAll('.fund-card').length;
+
+            try {
+                const resDash = await fetch('http://localhost:3000/api/dashboard');
+                if (resDash.ok) {
+                    const dData = await resDash.json();
+                    const balEl = document.getElementById('globalBalance');
+                    balEl.innerText = formatMoney(dData.soDuQuy) + ' đ';
+                    if(dData.soDuQuy < 200000) balEl.style.color = 'var(--danger)';
+                    else balEl.style.color = 'var(--success)';
+                }
+            } catch(e) {}
+        }
+
+        async function syncLockState() {
+            try {
+                await fetch('http://localhost:3000/api/settings/locked_funds', {
+                    method: 'PUT', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ gia_tri: JSON.stringify(lockedFundsList) })
+                });
+            } catch(e) { console.error("Lỗi đồng bộ state khóa"); }
+        }
+
+        function lockFund(groupKey) {
+            Swal.fire({
+                title: 'Chốt sổ quỹ này?',
+                text: `Quỹ sẽ bị đóng băng. Các nút Thêm/Xóa sẽ bị khóa trên toàn hệ thống để ngăn dữ liệu bị chỉnh sửa sai lệch!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--warning)',
+                cancelButtonColor: 'var(--text-muted)',
+                confirmButtonText: '<i class="fas fa-lock"></i> Chốt sổ ngay',
+                cancelButtonText: 'Hủy'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    if (!lockedFundsList.includes(groupKey)) {
+                        lockedFundsList.push(groupKey);
+                        await syncLockState();
+                    }
+                    renderAllFunds();
+                    Swal.fire({ icon: 'success', title: 'Đã khóa sổ đồng bộ!', timer: 1500, showConfirmButton: false });
+                }
+            });
+        }
+
+        function unlockFund(groupKey) {
+            Swal.fire({
+                title: 'Mở khóa quỹ?',
+                text: "Quỹ sẽ được mở lại để bạn tiếp tục nhập hoặc điều chỉnh dữ liệu.",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--primary)',
+                cancelButtonColor: 'var(--text-muted)',
+                confirmButtonText: '<i class="fas fa-unlock"></i> Xác nhận mở khóa',
+                cancelButtonText: 'Hủy'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    lockedFundsList = lockedFundsList.filter(f => f !== groupKey);
+                    await syncLockState();
+                    renderAllFunds();
+                }
+            });
+        }
+
+        document.getElementById('createFundForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            let tenQ = document.getElementById('ten_chuong_trinh').value;
+            let ngayQ = document.getElementById('ngay_thu_quy').value;
+            let gKey = tenQ + '|' + ngayQ;
+            globalFunds.unshift({ ten_quy: tenQ, ngay_thu: ngayQ, groupKey: gKey, entries: [], isLocal: true });
+            closeModal('modalCreateFund');
+            
+            Swal.fire({ icon: 'success', title: 'Thành công', text: 'Đã tạo chương trình quỹ mới.', timer: 1500, showConfirmButton: false });
+            renderAllFunds();
+        });
+
+        async function deleteFund(groupKey) {
+            const confirmResult = await Swal.fire({
+                title: 'Xóa toàn bộ bảng quỹ?',
+                text: `Mọi dữ liệu thu tiền bên trong sẽ bị xóa vĩnh viễn!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--danger)',
+                cancelButtonColor: 'var(--text-muted)',
+                confirmButtonText: '<i class="fas fa-trash-alt"></i> Xóa toàn bộ',
+                cancelButtonText: 'Hủy'
+            });
+
+            if (confirmResult.isConfirmed) {
+                const fund = globalFunds.find(f => f.groupKey === groupKey);
+                if (fund) {
+                    try {
+                        const deletePromises = fund.entries.map(entry => 
+                            fetch(`http://localhost:3000/api/funds/${entry.id}`, { method: 'DELETE' })
+                        );
+                        await Promise.all(deletePromises);
+                        await loadFunds();
+                        Swal.fire({ icon: 'success', title: 'Đã xóa quỹ!', timer: 1500, showConfirmButton: false });
+                    } catch(e) {
+                        Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không thể kết nối máy chủ để xóa.' });
+                    }
+                }
+            }
+        }
+
+        document.getElementById('addEntryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const mssv = $('#entry_member').val();
+            const newAmount = Number(document.getElementById('entry_amount').value);
+            
+            if (!mssv) { return Swal.fire({ icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng chọn người nộp!' }); }
+            // Fix số âm
+            if(newAmount <= 0) { return Swal.fire({ icon: 'warning', title: 'Lỗi Logic', text: 'Số tiền đóng phải lớn hơn 0 VNĐ!' }); }
+            
+            let hoTen = "Unknown";
+            if (mssv === 'Khác') {
+                hoTen = document.getElementById('entry_member_other').value.trim();
+                if (!hoTen) return Swal.fire({ icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng nhập tên người nộp ủng hộ/tài trợ!' });
+            } else {
+                const member = allMembers.find(m => m.mssv === mssv);
+                hoTen = member ? member.ho_ten : "Unknown";
+            }
+
+            const tenQuy = document.getElementById('target_fund_name').value;
+            const dateQuy = document.getElementById('target_fund_date').value;
+            const groupKey = tenQuy + '|' + dateQuy;
+            
+            let previousTotal = 0;
+            const currentFund = globalFunds.find(f => f.groupKey === groupKey);
+            if (currentFund) {
+                currentFund.entries.forEach(entry => {
+                    if (entry.member_name === hoTen) previousTotal += Number(entry.amount);
+                });
+            }
+
+            if (previousTotal > 0) {
+                const totalAfter = previousTotal + newAmount;
+                const confirmResult = await Swal.fire({
+                    title: 'Xác nhận cộng dồn quỹ',
+                    html: `
+                        <div style="font-size: 15px; text-align: left; line-height: 1.6;">
+                            Người nộp <b>${hoTen}</b> đã đóng trước đó: <b style="color: var(--primary);">${formatMoney(previousTotal)} đ</b><br>
+                            Số tiền nộp thêm lần này: <b style="color: var(--danger);">${formatMoney(newAmount)} đ</b><br>
+                            <hr style="margin: 10px 0; border: 0; border-top: 1px dashed #e2e8f0;">
+                            👉 Tổng quỹ người này đã đóng cho <b>[${tenQuy}]</b> sẽ là:<br>
+                            <span style="font-size: 20px; font-weight: bold; color: var(--success);">${formatMoney(totalAfter)} đ</span>
+                        </div>
+                    `,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fas fa-check"></i> Xác nhận thu',
+                    cancelButtonText: 'Hủy bỏ'
+                });
+                if (!confirmResult.isConfirmed) return; 
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/api/funds', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        ngay_gd: dateQuy || new Date().toISOString().split('T')[0], loai_gd: 'Thu',
+                        noi_dung: tenQuy, so_tien: newAmount,
+                        nguoi_thuc_hien: hoTen,
+                        ghi_chu: document.getElementById('entry_method').value + ' - ' + document.getElementById('entry_note').value
+                    })
+                });
+                
+                if(response.ok) {
+                    closeModal('modalAddEntry'); 
+                    await loadFunds(); 
+                    Swal.fire({ icon: 'success', title: 'Đã thu tiền!', text: `Khoản thu ${formatMoney(newAmount)} đ của ${hoTen} đã được ghi nhận.`, timer: 2000, showConfirmButton: false });
+                }
+            } catch (error) {
+                Swal.fire({ icon: 'error', title: 'Lỗi hệ thống', text: 'Đã xảy ra lỗi kết nối mạng!' });
+            }
+        });
+
+        async function deleteEntry(id) {
+            const confirmResult = await Swal.fire({
+                title: 'Xóa khoản thu này?',
+                text: "Dữ liệu sẽ bị xóa và số dư tổng sẽ thay đổi!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: 'var(--danger)',
+                cancelButtonColor: 'var(--text-muted)',
+                confirmButtonText: 'Xóa khoản thu',
+                cancelButtonText: 'Hủy'
+            });
+
+            if (confirmResult.isConfirmed) {
+                try {
+                    await fetch(`http://localhost:3000/api/funds/${id}`, { method: 'DELETE' }); 
+                    await loadFunds();
+                    Swal.fire({ icon: 'success', title: 'Đã xóa!', timer: 1500, showConfirmButton: false });
+                } catch(e) {
+                    Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không thể kết nối máy chủ để xóa.' });
+                }
+            }
+        }
+
+        function openFundModal() { document.getElementById('createFundForm').reset(); document.getElementById('modalCreateFund').style.display = 'flex'; }
+        
+        function openEntryModal(name, date) {
+            document.getElementById('addEntryForm').reset();
+            document.getElementById('entry_member_other').style.display = 'none';
+            document.getElementById('entry_member_other').removeAttribute('required');
+            
+            if ($('#entry_member').hasClass("select2-hidden-accessible")) $('#entry_member').select2('destroy');
+            $('#entry_member').select2({ placeholder: "-- Tìm và chọn người nộp --", dropdownParent: $('#modalAddEntry'), width: '100%' });
+            $('#entry_member').val('').trigger('change');
+            
+            $('#entry_member').on('change', function() {
+                if ($(this).val() === 'Khác') {
+                    document.getElementById('entry_member_other').style.display = 'block';
+                    document.getElementById('entry_member_other').setAttribute('required', 'true');
+                } else {
+                    document.getElementById('entry_member_other').style.display = 'none';
+                    document.getElementById('entry_member_other').removeAttribute('required');
+                }
+            });
+            
+            document.getElementById('target_fund_name').value = name;
+            document.getElementById('target_fund_date').value = date;
+            document.getElementById('modalAddEntry').style.display = 'flex';
+        }
+
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        window.onload = async () => {
+            await loadMembers();
+            await loadFunds();
+        };
+    </script>
+</body>
+</html>
