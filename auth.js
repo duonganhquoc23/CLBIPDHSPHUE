@@ -412,4 +412,58 @@ async function bootstrapAdmin(pool) {
   }
 }
 
-module.exports = { setupAuthApi, ensureAuthSchema, bootstrapAdmin, bearerAuth };
+/**
+ * Bootstrap CÁC tài khoản quản trị bổ sung từ env BOOTSTRAP_ADMINS (tuỳ chọn).
+ * Định dạng: "email1:matkhau1,email2:matkhau2,..." — dấu cách thừa tự động cắt.
+ * Mỗi tài khoản: đã có theo email → cấp lại mật khẩu + vai trò ADMIN; chưa có → tạo mới.
+ * Lưu ý: mật khẩu KHÔNG được chứa dấu ":" (ký tự này dùng để tách email/mật khẩu).
+ * Gỡ bớt tài khoản khỏi env KHÔNG xoá tài khoản trong DB — để vô hiệu hoá,
+ * đặt trang_thai_hd = 'Ngừng hoạt động' qua trang quản lý thành viên.
+ */
+async function bootstrapExtraAdmins(pool) {
+  const raw = (process.env.BOOTSTRAP_ADMINS || '').trim();
+  if (!raw) return; // không cấu hình → bỏ qua im lặng
+
+  const accounts = raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => {
+      const idx = s.indexOf(':');
+      if (idx <= 0) return null;
+      const email = s.slice(0, idx).trim();
+      const password = s.slice(idx + 1).trim();
+      return email.includes('@') && password ? { email, password } : null;
+    })
+    .filter(Boolean);
+
+  if (!accounts.length) {
+    console.warn('[Bootstrap] BOOTSTRAP_ADMINS sai định dạng — cần "email:matkhau,email:matkhau,...". Bỏ qua.');
+    return;
+  }
+
+  for (let i = 0; i < accounts.length; i++) {
+    const { email, password } = accounts[i];
+    try {
+      const hash = await bcrypt.hash(password, 10);
+      const [rows] = await pool.query('SELECT id FROM thanh_vien WHERE email = ? LIMIT 1', [email]);
+      if (rows.length) {
+        await pool.query("UPDATE thanh_vien SET mat_khau = ?, vai_tro = 'ADMIN' WHERE id = ?", [hash, rows[0].id]);
+        console.log(`[Bootstrap] Đã cấp ADMIN + cập nhật mật khẩu cho: ${email}`);
+      } else {
+        // mssv là UNIQUE NOT NULL không default — bắt buộc truyền giá trị.
+        // Mã riêng từng tài khoản: Date.now + (i+1) đảm bảo không trùng trong 1 lần boot.
+        const maTv = ('IP' + String(Date.now()).slice(-6) + String(i + 1)).slice(0, 20);
+        await pool.query(
+          "INSERT INTO thanh_vien (ma_tv, mssv, ho_ten, email, vai_tro, trang_thai_hd, mat_khau) VALUES (?, ?, 'Quản trị viên', ?, 'ADMIN', 'Đang hoạt động', ?)",
+          [maTv, maTv, email, hash]
+        );
+        console.log(`[Bootstrap] Đã tạo tài khoản quản trị mới: ${email} (ma_tv=${maTv})`);
+      }
+    } catch (e) {
+      console.error(`[Bootstrap] Lỗi tạo/cập nhật ${email}:`, dbErr(e));
+    }
+  }
+}
+
+module.exports = { setupAuthApi, ensureAuthSchema, bootstrapAdmin, bootstrapExtraAdmins, bearerAuth };

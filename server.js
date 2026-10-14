@@ -3,7 +3,7 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { setupAuthApi, ensureAuthSchema, bootstrapAdmin } = require('./auth');
+const { setupAuthApi, ensureAuthSchema, bootstrapAdmin, bootstrapExtraAdmins } = require('./auth');
 const { ensureCoreSchema } = require('./schema');
 require('dotenv').config();
 
@@ -502,6 +502,8 @@ app.delete('/api/communications/:id', async (req, res) => {
     try { await ensureAuthSchema(pool); } catch (e) { console.error('[Boot] Lỗi migrate schema:', e.message); }
     // 3. Tạo/cập nhật tài khoản ADMIN đầu tiên từ env
     try { await bootstrapAdmin(pool); } catch (e) { console.error('[Boot] Lỗi bootstrap admin:', e.message); }
+    // 4. Tạo/cập nhật CÁC tài khoản ADMIN bổ sung từ BOOTSTRAP_ADMINS (nếu có)
+    try { await bootstrapExtraAdmins(pool); } catch (e) { console.error('[Boot] Lỗi bootstrap admin bổ sung:', e.message); }
 })();
 
 const PORT = process.env.PORT || 3000;

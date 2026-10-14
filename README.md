@@ -56,11 +56,13 @@ CLBIPDHSPHUE/
    JWT_SECRET=chuỗi-ngẫu-dài-bất-kỳ
    BOOTSTRAP_ADMIN_EMAIL=admin@clb.vn
    BOOTSTRAP_ADMIN_PASSWORD=mật-khẩu-admin
+   BOOTSTRAP_ADMINS=admin2@clb.vn:mat-khau-2,admin3@clb.vn:mat-khau-3
    ```
 
    - `DB_*`: lấy từ dialog **Connect** của cluster trên tidbcloud.com (host dạng `gateway01.<region>.prod.aws.tidbcloud.com`, user dạng `<prefix>.root`). TLS được bật mặc định, không cần file CA.
    - Dùng Aiven MySQL? Điền host/port/user của Aiven và thêm `DB_SSL_CA=ca.pem` (file đã có sẵn trong repo).
    - `JWT_SECRET`: khóa ký JWT — bắt buộc khi chạy thật.
+   - `BOOTSTRAP_ADMINS` (tuỳ chọn): tạo **nhiều tài khoản admin** cùng lúc lúc boot, định dạng `email1:mật-khẩu1,email2:mật-khẩu2,...` (mật khẩu không chứa dấu `:`). Tài khoản đã tồn tại theo email → được cấp lại mật khẩu + quyền ADMIN.
    - `BOOTSTRAP_ADMIN_*`: (khuyến nghị) lúc khởi động, hệ thống tự tạo/cập nhật tài khoản ADMIN với email + mật khẩu này.
 
 3. Chạy và mở trình duyệt:
@@ -107,6 +109,7 @@ Lần đầu khởi động, hệ thống **tự tạo toàn bộ schema** (12 b
 | `JWT_SECRET` | có trên production | Khóa ký JWT — Render tự sinh qua Blueprint |
 | `BOOTSTRAP_ADMIN_EMAIL` | khuyến nghị | Email tài khoản ADMIN tạo lúc boot |
 | `BOOTSTRAP_ADMIN_PASSWORD` | khuyến nghị | Mật khẩu tài khoản ADMIN tạo lúc boot |
+| `BOOTSTRAP_ADMINS` | không | Danh sách admin bổ sung `email1:matkhau1,email2:matkhau2,...` — server tự tạo/cấp ADMIN lúc boot |
 
 ## Phân quyền & bảo mật
 

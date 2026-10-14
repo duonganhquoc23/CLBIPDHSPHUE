@@ -9,6 +9,8 @@
 #   DB_PASSWORD             → mật khẩu TiDB Cloud đã đặt khi tạo cluster
 #   BOOTSTRAP_ADMIN_EMAIL   → email tài khoản admin đầu tiên
 #   BOOTSTRAP_ADMIN_PASSWORD→ mật khẩu admin đầu tiên
+# Tuỳ chọn: BOOTSTRAP_ADMINS → danh sách admin bổ sung "email1:matkhau1,email2:matkhau2,..."
+#   (thêm sau khi apply qua tab Environment của service — server tự tạo tài khoản lúc boot)
 # JWT_SECRET được Render tự sinh ngẫu nhiên (generateValue: true).
 
 services:
@@ -39,4 +41,6 @@ services:
       - key: BOOTSTRAP_ADMIN_EMAIL
         sync: false
       - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: BOOTSTRAP_ADMINS
         sync: false
