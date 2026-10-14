@@ -398,9 +398,12 @@ async function bootstrapAdmin(pool) {
       console.log(`[Bootstrap] Đã cấp quyền ADMIN + cập nhật mật khẩu cho tài khoản: ${email}`);
     } else {
       const maTv = 'IP' + String(Date.now()).slice(-6);
+      // LƯU Ý: mssv là cột UNIQUE NOT NULL không có default — bắt buộc phải truyền giá trị,
+      // nếu không INSERT sẽ lỗi ER_NO_DEFAULT_FOR_FIELD trên database mới (TiDB strict mode)
+      // và tài khoản admin không bao giờ được tạo. Dùng chung mã với ma_tv (unique, 8 ký tự).
       await pool.query(
-        "INSERT INTO thanh_vien (ma_tv, ho_ten, email, vai_tro, trang_thai_hd, mat_khau) VALUES (?, 'Quản trị viên', ?, 'ADMIN', 'Đang hoạt động', ?)",
-        [maTv, email, hash]
+        "INSERT INTO thanh_vien (ma_tv, mssv, ho_ten, email, vai_tro, trang_thai_hd, mat_khau) VALUES (?, ?, 'Quản trị viên', ?, 'ADMIN', 'Đang hoạt động', ?)",
+        [maTv, maTv, email, hash]
       );
       console.log(`[Bootstrap] Đã tạo tài khoản quản trị mới: ${email} (ma_tv=${maTv})`);
     }
