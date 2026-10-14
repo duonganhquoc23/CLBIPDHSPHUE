@@ -1,10 +1,10 @@
 const express = require('express');
-const mysql = require('mysql2/promise');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { setupAuthApi, ensureAuthSchema, bootstrapAdmin } = require('./auth');
+const { ensureCoreSchema } = require('./schema');
 require('dotenv').config();
 
 const app = express();
@@ -17,22 +17,12 @@ app.set('trust proxy', 1);
 // Lưu ý: HEALTH CHECK, FRONTEND TĨNH và AUTH API được đăng ký phía dưới,
 // ngay sau khi tạo pool (cần pool cho /api/health + middleware bảo vệ /api/*).
 
-// ================= CẤU HÌNH KẾT NỐI DATABASE AIVEN =================
-// Đọc file chứng chỉ SSL (Yêu cầu file ca.pem phải nằm cùng thư mục với server.js)
-const caCert = fs.readFileSync(path.join(__dirname, 'ca.pem'));
-
-const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'mysql-297dc313-clbipkth-79ea.e.aivencloud.com', // ĐIỀN HOST AIVEN VÀO ĐÂY
-    port: Number(process.env.DB_PORT || 19088),                       // Ép kiểu số để tránh env dạng chuỗi gây lỗi kết nối
-    user: process.env.DB_USER || 'avnadmin',
-    password: process.env.DB_PASSWORD || '', // ĐIỀN MẬT KHẨU AIVEN VÀO ĐÂY
-    database: process.env.DB_NAME || 'clb_ip_db',
-    dateStrings: true, // Giữ nguyên để không làm lỗi định dạng ngày tháng cũ của hệ thống
-    ssl: {
-        ca: caCert
-    }
-});
-// ====================================================================
+// ================= KẾT NỐI DATABASE (TiDB Cloud / Aiven / MySQL) =================
+// Cấu hình đọc từ env trong db.js: DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, DB_SSL, DB_SSL_CA
+// - TiDB Cloud: TLS chuẩn (không cần CA riêng), port 4000 — xem render.yaml + README
+// - Aiven MySQL: đặt thêm DB_SSL_CA=ca.pem
+const pool = require('./db');
+// =================================================================================
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -506,7 +496,11 @@ app.delete('/api/communications/:id', async (req, res) => {
 // ================= AUTO-MIGRATE + BOOTSTRAP ADMIN LÚC BOOT =================
 // Chạy nền ngay trước app.listen; mỗi bước tự try/catch — lỗi DB chỉ log, KHÔNG crash process
 (async () => {
+    // 1. Tạo schema lõi nếu database trống (deploy TiDB lần đầu chạy được ngay)
+    try { await ensureCoreSchema(pool); } catch (e) { console.error('[Boot] Lỗi tạo schema lõi:', e.message); }
+    // 2. Migrate các cột/bảng phục vụ đăng nhập
     try { await ensureAuthSchema(pool); } catch (e) { console.error('[Boot] Lỗi migrate schema:', e.message); }
+    // 3. Tạo/cập nhật tài khoản ADMIN đầu tiên từ env
     try { await bootstrapAdmin(pool); } catch (e) { console.error('[Boot] Lỗi bootstrap admin:', e.message); }
 })();
 

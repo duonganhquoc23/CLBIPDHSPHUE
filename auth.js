@@ -19,6 +19,12 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { rateLimit } = require('express-rate-limit');
 
+// Định dạng lỗi DB gồm cả code (ECONNREFUSED, ETIMEDOUT, ER_ACCESS_DENIED_ERROR...)
+// để dễ chẩn đoán cấu hình DB trên log Render
+function dbErr(e) {
+  return e && e.code ? `${e.code}: ${e.message}` : String((e && e.message) || e);
+}
+
 // ===== Secret & thời hạn token =====
 // JWT_SECRET bắt buộc trên production (Render env). Fallback dev chỉ để chạy thử local.
 const JWT_SECRET = process.env.JWT_SECRET || (() => {
@@ -108,7 +114,7 @@ async function resolveRole(pool, user) {
     if (rows.length) role = 'BCN';
     await pool.query('UPDATE thanh_vien SET vai_tro = ? WHERE id = ?', [role, user.id]);
   } catch (e) {
-    console.error('[Auth] Lỗi resolve vai trò:', e.message);
+    console.error('[Auth] Lỗi resolve vai trò:', dbErr(e));
   }
   return role;
 }
@@ -347,7 +353,7 @@ async function ensureAuthSchema(pool) {
       console.log('[Migrate] Đã thêm cột thanh_vien.vai_tro');
     }
   } catch (e) {
-    console.error('[Migrate] Lỗi kiểm tra/thêm cột thanh_vien:', e.message);
+    console.error('[Migrate] Lỗi kiểm tra/thêm cột thanh_vien:', dbErr(e));
   }
 
   // 2. Bảng lưu OTP đặt lại mật khẩu
@@ -361,7 +367,7 @@ async function ensureAuthSchema(pool) {
       tao_luc DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
   } catch (e) {
-    console.error('[Migrate] Lỗi tạo bảng dat_lai_mat_khau:', e.message);
+    console.error('[Migrate] Lỗi tạo bảng dat_lai_mat_khau:', dbErr(e));
   }
 
   // 3. Bảng cài đặt hệ thống (khóa quỹ...) — có thể đã tồn tại trên Aiven
@@ -371,7 +377,7 @@ async function ensureAuthSchema(pool) {
       gia_tri TEXT
     )`);
   } catch (e) {
-    console.error('[Migrate] Lỗi tạo bảng cai_dat_he_thong:', e.message);
+    console.error('[Migrate] Lỗi tạo bảng cai_dat_he_thong:', dbErr(e));
   }
 }
 
@@ -399,7 +405,7 @@ async function bootstrapAdmin(pool) {
       console.log(`[Bootstrap] Đã tạo tài khoản quản trị mới: ${email} (ma_tv=${maTv})`);
     }
   } catch (e) {
-    console.error('[Bootstrap] Lỗi tạo/cập nhật tài khoản quản trị:', e.message);
+    console.error('[Bootstrap] Lỗi tạo/cập nhật tài khoản quản trị:', dbErr(e));
   }
 }
 

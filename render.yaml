@@ -1,6 +1,14 @@
 # Render Blueprint — Hệ thống quản lý CLB IP ĐHSP Huế
-# 1 web service Node.js duy nhất, MySQL giữ ở Aiven ngoài (Render free không có MySQL).
-# DB_PASSWORD + BOOTSTRAP_ADMIN_* được điền tay lúc Apply (sync: false — không commit vào repo).
+# 1 web service Node.js duy nhất. Database: TiDB Cloud (gói Starter miễn phí) —
+# giao thức MySQL, port 4000, TLS bắt buộc. App tự tạo toàn bộ bảng lúc boot
+# (database trống "test" cũng chạy được ngay), KHÔNG cần import SQL.
+#
+# Lúc Apply Blueprint điền tay 5 ô (sync: false — không commit vào repo):
+#   DB_HOST                 → gateway01.<region>.prod.aws.tidbcloud.com (copy từ dialog Connect của TiDB Cloud)
+#   DB_USER                 → <prefix>.root (copy từ dialog Connect)
+#   DB_PASSWORD             → mật khẩu TiDB Cloud đã đặt khi tạo cluster
+#   BOOTSTRAP_ADMIN_EMAIL   → email tài khoản admin đầu tiên
+#   BOOTSTRAP_ADMIN_PASSWORD→ mật khẩu admin đầu tiên
 # JWT_SECRET được Render tự sinh ngẫu nhiên (generateValue: true).
 
 services:
@@ -15,13 +23,15 @@ services:
       - key: NODE_VERSION
         value: '20'
       - key: DB_HOST
-        value: 'mysql-297dc313-clbipkth-79ea.e.aivencloud.com'
+        sync: false
       - key: DB_PORT
-        value: '19088'
+        value: '4000'
       - key: DB_USER
-        value: 'avnadmin'
+        sync: false
       - key: DB_NAME
-        value: 'clb_ip_db'
+        value: 'test'
+      - key: DB_SSL
+        value: 'true'
       - key: DB_PASSWORD
         sync: false
       - key: JWT_SECRET
