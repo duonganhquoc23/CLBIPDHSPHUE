@@ -11,6 +11,10 @@
  *  4. Monkey-patch window.fetch: tự gắn Authorization cho mọi request cùng origin
  *     bắt đầu bằng /api/ (trừ /api/v1/auth/) — KHÔNG đụng Content-Type (an toàn multipart).
  *  5. Export window.PageGuard.getUser() để trang đọc thông tin user từ localStorage.
+ *  6. Tự chèn nút ĐĂNG XUẤT vào trang: ưu tiên cuối sidebar admin (.sidebar-menu),
+ *     thanh nav thành viên (.nav-actions), nếu không có → nút nổi góc phải dưới.
+ *     Đăng xuất = xóa 3 key clbip_* (JWT stateless, không có session phía server cần thu hồi)
+ *     → về login.html kèm ?next= trang hiện tại.
  *
  * LƯU Ý: JWT chỉ được decode (base64url) để ĐỌC exp + role, KHÔNG verify chữ ký —
  * việc verify thật nằm ở server (middleware bearerAuth bảo vệ mọi endpoint /api/*).
@@ -133,4 +137,83 @@
       }
     }
   };
+
+  // ---------- 6. Tự chèn nút ĐĂNG XUẤT ----------
+  var LOGOUT_ICON =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>' +
+    '<polyline points="16 17 21 12 16 7"></polyline>' +
+    '<line x1="21" y1="12" x2="9" y2="12"></line></svg>';
+
+  function doLogout(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    clearSession();
+    hardRedirect(LOGIN_PATH + '?next=' + encodeURIComponent(location.pathname + (location.search || '')));
+  }
+
+  function makeLogoutEl() {
+    var el = document.createElement('a');
+    el.id = 'clbip-logout-btn';
+    el.href = '#';
+    el.setAttribute('role', 'button');
+    el.title = 'Đăng xuất khỏi hệ thống';
+    el.innerHTML = LOGOUT_ICON + '<span>Đăng xuất</span>';
+    el.addEventListener('click', doLogout);
+    return el;
+  }
+
+  function injectLogoutButton() {
+    if (document.getElementById('clbip-logout-btn')) return;
+
+    // (a) Sidebar các trang admin: mục cuối trong .sidebar-menu, cùng phong cách menu
+    var sidebarMenu = document.querySelector('.sidebar .sidebar-menu') || document.querySelector('.sidebar-menu');
+    if (sidebarMenu) {
+      var item = makeLogoutEl();
+      item.setAttribute('style',
+        'display:flex;align-items:center;gap:12px;padding:13px 20px;margin-top:6px;' +
+        'border-radius:10px;color:#475569;font-size:15px;font-weight:500;cursor:pointer;' +
+        'text-decoration:none;transition:background .18s,color .18s;');
+      item.addEventListener('mouseenter', function () {
+        item.style.background = '#14509b'; item.style.color = '#fff';
+      });
+      item.addEventListener('mouseleave', function () {
+        item.style.background = 'transparent'; item.style.color = '#475569';
+      });
+      sidebarMenu.appendChild(item);
+      return;
+    }
+
+    // (b) Thanh điều hướng các trang thành viên: nút Outline trong .nav-actions
+    var navActions = document.querySelector('.nav-actions');
+    if (navActions) {
+      var btn = makeLogoutEl();
+      btn.setAttribute('style',
+        'display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border:1.5px solid #e2e8f0;' +
+        'border-radius:10px;background:#fff;color:#334155;font-size:14px;font-weight:600;cursor:pointer;' +
+        'text-decoration:none;transition:background .18s,color .18s,border-color .18s;');
+      btn.addEventListener('mouseenter', function () {
+        btn.style.background = '#fee2e2'; btn.style.color = '#b91c1c'; btn.style.borderColor = '#fecaca';
+      });
+      btn.addEventListener('mouseleave', function () {
+        btn.style.background = '#fff'; btn.style.color = '#334155'; btn.style.borderColor = '#e2e8f0';
+      });
+      navActions.appendChild(btn);
+      return;
+    }
+
+    // (c) Dự phòng: nút nổi góc phải dưới cho layout lạ
+    var float = makeLogoutEl();
+    float.setAttribute('style',
+      'position:fixed;right:20px;bottom:20px;z-index:2147483000;display:inline-flex;align-items:center;gap:8px;' +
+      'padding:12px 22px;border-radius:999px;background:#dc2626;color:#fff;font-size:14px;font-weight:600;' +
+      'box-shadow:0 8px 24px rgba(220,38,38,.35);cursor:pointer;text-decoration:none;');
+    document.body.appendChild(float);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectLogoutButton);
+  } else {
+    injectLogoutButton();
+  }
 })();
