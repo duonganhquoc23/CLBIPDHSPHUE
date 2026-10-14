@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script src="/frontend/js/guard.js" data-roles="ADMIN,BCN"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Tài Liệu - CLB IP</title>
@@ -189,7 +190,7 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000/api/documents';
+        const API_URL = '/api/documents';
         let allDocs = [];
         let currentEditId = null;
         
@@ -231,7 +232,7 @@
                 const fileExt = item.file_path ? item.file_path.split('.').pop().toLowerCase() : '';
                 const canPreview = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt);
 
-                const fileUrl = `http://localhost:3000${item.file_path}`;
+                const fileUrl = `${item.file_path}`;
                 let previewBtn = canPreview ? 
                     `<button class="btn btn-outline" style="padding: 6px 12px; font-size: 13px;" onclick="previewFile('${fileUrl}', '${fileExt}', '${item.ten_tai_lieu}')"><i class="fas fa-eye"></i> Xem trước</button>` 
                     : '';
@@ -305,7 +306,7 @@
             const dataToExport = allDocs.map(doc => ({
                 "Nhóm": doc.nhom, "Tên Tài Liệu": doc.ten_tai_lieu, "Mô Tả": doc.mo_ta,
                 "Ngày Tải Lên": doc.ngay_tao ? new Date(doc.ngay_tao).toLocaleDateString('vi-VN') : '',
-                "Đường Dẫn File": `http://localhost:3000${doc.file_path}`
+                "Đường Dẫn File": `${doc.file_path}`
             }));
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
             const workbook = XLSX.utils.book_new();

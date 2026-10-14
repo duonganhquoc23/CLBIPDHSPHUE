@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script src="/frontend/js/guard.js" data-roles="ADMIN,BCN"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Quỹ CLB - CLB IP</title>
@@ -153,7 +154,7 @@
 
         async function loadMembers() {
             try {
-                const res = await fetch('http://localhost:3000/api/members');
+                const res = await fetch('/api/members');
                 if (res.ok) {
                     allMembers = await res.json();
                     const select = $('#entry_member');
@@ -167,13 +168,13 @@
         async function loadFunds() {
             try {
                 // Tải trạng thái khóa quỹ từ Database Server (Fix lỗi 1)
-                const resSet = await fetch('http://localhost:3000/api/settings/locked_funds');
+                const resSet = await fetch('/api/settings/locked_funds');
                 if(resSet.ok) {
                     const setObj = await resSet.json();
                     if(setObj.gia_tri) lockedFundsList = JSON.parse(setObj.gia_tri);
                 }
 
-                const resFunds = await fetch('http://localhost:3000/api/funds');
+                const resFunds = await fetch('/api/funds');
                 if (resFunds.ok) {
                     const flatFunds = await resFunds.json();
                     let grouped = {};
@@ -260,7 +261,7 @@
             });
 
             try {
-                const resPlans = await fetch('http://localhost:3000/api/plans');
+                const resPlans = await fetch('/api/plans');
                 if (resPlans.ok) {
                     const plans = await resPlans.json();
                     plans.filter(p => p.tong_kinh_phi > 0).forEach(plan => {
@@ -280,7 +281,7 @@
             document.getElementById('totalPrograms').innerText = document.querySelectorAll('.fund-card').length;
 
             try {
-                const resDash = await fetch('http://localhost:3000/api/dashboard');
+                const resDash = await fetch('/api/dashboard');
                 if (resDash.ok) {
                     const dData = await resDash.json();
                     const balEl = document.getElementById('globalBalance');
@@ -293,7 +294,7 @@
 
         async function syncLockState() {
             try {
-                await fetch('http://localhost:3000/api/settings/locked_funds', {
+                await fetch('/api/settings/locked_funds', {
                     method: 'PUT', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ gia_tri: JSON.stringify(lockedFundsList) })
                 });
@@ -370,7 +371,7 @@
                 if (fund) {
                     try {
                         const deletePromises = fund.entries.map(entry => 
-                            fetch(`http://localhost:3000/api/funds/${entry.id}`, { method: 'DELETE' })
+                            fetch(`/api/funds/${entry.id}`, { method: 'DELETE' })
                         );
                         await Promise.all(deletePromises);
                         await loadFunds();
@@ -434,7 +435,7 @@
             }
 
             try {
-                const response = await fetch('http://localhost:3000/api/funds', {
+                const response = await fetch('/api/funds', {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         ngay_gd: dateQuy || new Date().toISOString().split('T')[0], loai_gd: 'Thu',
@@ -468,7 +469,7 @@
 
             if (confirmResult.isConfirmed) {
                 try {
-                    await fetch(`http://localhost:3000/api/funds/${id}`, { method: 'DELETE' }); 
+                    await fetch(`/api/funds/${id}`, { method: 'DELETE' }); 
                     await loadFunds();
                     Swal.fire({ icon: 'success', title: 'Đã xóa!', timer: 1500, showConfirmButton: false });
                 } catch(e) {

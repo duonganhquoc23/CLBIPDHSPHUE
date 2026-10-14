@@ -4,11 +4,18 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { setupAuthApi, ensureAuthSchema, bootstrapAdmin } = require('./auth');
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+// Tin tưởng 1 lớp proxy (Render) để lấy đúng IP client cho rate-limit
+app.set('trust proxy', 1);
+
+// Lưu ý: HEALTH CHECK, FRONTEND TĨNH và AUTH API được đăng ký phía dưới,
+// ngay sau khi tạo pool (cần pool cho /api/health + middleware bảo vệ /api/*).
 
 // ================= CẤU HÌNH KẾT NỐI DATABASE AIVEN =================
 // Đọc file chứng chỉ SSL (Yêu cầu file ca.pem phải nằm cùng thư mục với server.js)
@@ -16,7 +23,7 @@ const caCert = fs.readFileSync(path.join(__dirname, 'ca.pem'));
 
 const pool = mysql.createPool({
     host: process.env.DB_HOST || 'mysql-297dc313-clbipkth-79ea.e.aivencloud.com', // ĐIỀN HOST AIVEN VÀO ĐÂY
-    port: process.env.DB_PORT || 19088,                               // ĐIỀN PORT AIVEN VÀO ĐÂY (thường là 19088)
+    port: Number(process.env.DB_PORT || 19088),                       // Ép kiểu số để tránh env dạng chuỗi gây lỗi kết nối
     user: process.env.DB_USER || 'avnadmin',
     password: process.env.DB_PASSWORD || '', // ĐIỀN MẬT KHẨU AIVEN VÀO ĐÂY
     database: process.env.DB_NAME || 'clb_ip_db',
@@ -39,6 +46,51 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 app.use('/uploads', express.static('uploads'));
+
+// ================= HEALTH CHECK (cho Render) =================
+// Luôn trả 200 với envelope chuẩn; trạng thái DB kiểm tra có timeout để không treo request
+app.get('/api/health', async (req, res) => {
+    let dbStatus = 'error';
+    try {
+        await Promise.race([
+            pool.query('SELECT 1'),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('DB timeout')), 2000))
+        ]);
+        dbStatus = 'connected';
+    } catch (error) {
+        dbStatus = 'error';
+    }
+    res.status(200).json({
+        success: true,
+        data: { status: 'ok', db: dbStatus, time: new Date().toISOString() },
+        message: 'Hệ thống hoạt động'
+    });
+});
+
+// ================= FRONTEND TĨNH (mount chọn lọc — KHÔNG serve root để không lộ server.js/ca.pem/.env) =================
+const frontendDir = path.join(__dirname, 'frontend');
+
+// Trang landing tại "/" + favicon gốc
+app.get('/', (req, res) => res.sendFile(path.join(frontendDir, 'landing.html')));
+app.get('/favicon.ico', (req, res) => res.sendFile(path.join(frontendDir, 'assets', 'favicon.ico')));
+
+// /frontend: css, js, assets — đặt no-cache giống Django để luôn lấy bản mới
+app.use('/frontend', express.static(frontendDir, {
+    setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache')
+}));
+// Các thư mục HTML cũ + ảnh club (static thường)
+app.use('/bcn', express.static(path.join(__dirname, 'bcn')));
+app.use('/thanhvien', express.static(path.join(__dirname, 'thanhvien')));
+app.use('/hinhanh', express.static(path.join(__dirname, 'hinhanh')));
+
+// Route tiện: dashboard BCN ở gốc + link ngắn
+app.get('/trang_chu.html', (req, res) => res.sendFile(path.join(__dirname, 'trang_chu.html')));
+app.get('/login', (req, res) => res.redirect('/frontend/login.html'));
+app.get('/admin', (req, res) => res.redirect('/trang_chu.html'));
+
+// ================= AUTH API /api/v1/auth/* + middleware bảo vệ /api/* =================
+// Đăng ký auth routes TRƯỚC, sau đó cài bearerAuth bảo vệ mọi endpoint /api/* cũ bên dưới
+setupAuthApi(app, pool);
 
 // ================= 0. API CÀI ĐẶT HỆ THỐNG (Khóa quỹ) =================
 app.get('/api/settings/:khoa', async (req, res) => {
@@ -451,5 +503,12 @@ app.delete('/api/communications/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
+// ================= AUTO-MIGRATE + BOOTSTRAP ADMIN LÚC BOOT =================
+// Chạy nền ngay trước app.listen; mỗi bước tự try/catch — lỗi DB chỉ log, KHÔNG crash process
+(async () => {
+    try { await ensureAuthSchema(pool); } catch (e) { console.error('[Boot] Lỗi migrate schema:', e.message); }
+    try { await bootstrapAdmin(pool); } catch (e) { console.error('[Boot] Lỗi bootstrap admin:', e.message); }
+})();
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server Backend CLB IP đang chạy tại http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Server Backend CLB IP đang chạy tại port ${PORT}`));

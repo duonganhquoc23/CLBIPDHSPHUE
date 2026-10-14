@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script src="/frontend/js/guard.js" data-roles="ADMIN,BCN,MEMBER"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trang Chủ - CLB IP</title>
@@ -245,7 +246,7 @@
     </div>
 
     <script>
-        const API_URL_BASE = 'http://localhost:3000/api';
+        const API_URL_BASE = '/api';
 
         function timeAgo(dateString) {
             const seconds = Math.floor((new Date() - new Date(dateString)) / 1000);
@@ -277,7 +278,7 @@
                 
                 posts.forEach(post => {
                     const isPinned = post.is_pinned === 1;
-                    let imgHtml = post.tep_url ? `<img src="http://localhost:3000${post.tep_url}" style="width:100%; border-radius:8px; margin-top:10px; max-height:400px; object-fit:cover;">` : '';
+                    let imgHtml = post.tep_url ? `<img src="${post.tep_url}" style="width:100%; border-radius:8px; margin-top:10px; max-height:400px; object-fit:cover;">` : '';
                     
                     feedContainer.innerHTML += `
                         <div class="card post-card ${isPinned ? 'pinned' : ''}">

@@ -1,0 +1,32 @@
+# Render Blueprint — Hệ thống quản lý CLB IP ĐHSP Huế
+# 1 web service Node.js duy nhất, MySQL giữ ở Aiven ngoài (Render free không có MySQL).
+# DB_PASSWORD + BOOTSTRAP_ADMIN_* được điền tay lúc Apply (sync: false — không commit vào repo).
+# JWT_SECRET được Render tự sinh ngẫu nhiên (generateValue: true).
+
+services:
+  - type: web
+    name: clbipdhsphue
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: '20'
+      - key: DB_HOST
+        value: 'mysql-297dc313-clbipkth-79ea.e.aivencloud.com'
+      - key: DB_PORT
+        value: '19088'
+      - key: DB_USER
+        value: 'avnadmin'
+      - key: DB_NAME
+        value: 'clb_ip_db'
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        sync: false
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false

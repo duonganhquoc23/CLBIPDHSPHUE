@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script src="/frontend/js/guard.js" data-roles="ADMIN,BCN,MEMBER"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tài Liệu - CLB IP</title>
@@ -224,7 +225,7 @@
     </div>
 
     <script>
-        const API_URL_BASE = 'http://localhost:3000/api';
+        const API_URL_BASE = '/api';
         let allDocs = [];
 
         async function loadTaiLieuTV() {
@@ -241,7 +242,7 @@
             docs.forEach(doc => {
                 const dateStr = new Date(doc.ngay_tao).toLocaleDateString('vi-VN');
                 const ext = doc.file_path ? doc.file_path.split('.').pop().toLowerCase() : '';
-                const url = `http://localhost:3000${doc.file_path}`;
+                const url = `${doc.file_path}`;
                 
                 let icon = 'fa-file-alt'; let color = '#64748b';
                 if(['pdf'].includes(ext)) { icon = 'fa-file-pdf'; color = '#ef4444'; }

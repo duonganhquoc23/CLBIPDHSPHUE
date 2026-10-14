@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script src="/frontend/js/guard.js" data-roles="ADMIN,BCN"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Điểm danh GPS - CLB IP</title>
@@ -171,7 +172,7 @@
         async function loadAttendance() {
             const tbody = document.getElementById('attendanceTable');
             try {
-                const res = await fetch('http://localhost:3000/api/attendance'); 
+                const res = await fetch('/api/attendance'); 
                 if(!res.ok) throw new Error();
                 const data = await res.json();
                 tbody.innerHTML = '';
@@ -224,7 +225,7 @@
         async function toggleStatus(id, newStatus) {
             if (!confirm(`Bạn có chắc muốn cập nhật trạng thái hoạt động này thành: "${newStatus}"?`)) return;
             try {
-                await fetch(`http://localhost:3000/api/attendance/${id}/status`, {
+                await fetch(`/api/attendance/${id}/status`, {
                     method: 'PUT', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ trang_thai: newStatus })
                 });
@@ -236,7 +237,7 @@
         async function deleteAttendance(id) {
             if (!confirm("⚠️ Cảnh báo: Việc xóa hoạt động này sẽ xóa toàn bộ dữ liệu check-in của các thành viên. Hành động này không thể hoàn tác. Bạn chắc chắn muốn xóa chứ?")) return;
             try {
-                await fetch(`http://localhost:3000/api/attendance/${id}`, { method: 'DELETE' });
+                await fetch(`/api/attendance/${id}`, { method: 'DELETE' });
                 showCustomToast('Đã xóa', 'Phiên điểm danh và dữ liệu đi kèm đã bị xóa.');
                 loadAttendance();
             } catch(e) { alert("Đã xảy ra lỗi khi xóa phiên điểm danh!"); }
@@ -247,7 +248,7 @@
             document.getElementById('detailsTitle').innerText = `Chi tiết: ${name}`;
             
             try {
-                const res = await fetch(`http://localhost:3000/api/attendance/${id}`); 
+                const res = await fetch(`/api/attendance/${id}`); 
                 const records = await res.json();
                 const tbody = document.getElementById('detailsBody'); 
                 tbody.innerHTML = '';
@@ -293,7 +294,7 @@
                 records.push({ mssv: row.getAttribute('data-mssv'), trang_thai: row.querySelector('select').value });
             });
             try {
-                await fetch(`http://localhost:3000/api/attendance/${currentDotId}/bulk`, { 
+                await fetch(`/api/attendance/${currentDotId}/bulk`, { 
                     method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ records }) 
                 });
                 closeModal('modalDetails'); 
@@ -328,7 +329,7 @@
             e.preventDefault();
             // CẢNH BÁO: KIỂM TRA PHIÊN MỞ
             try {
-                const resChk = await fetch('http://localhost:3000/api/attendance');
+                const resChk = await fetch('/api/attendance');
                 if(resChk.ok) {
                     const dataChk = await resChk.json();
                     if (dataChk.filter(d => d.trang_thai === 'Đang mở').length > 0) {
@@ -345,7 +346,7 @@
             }
 
             try {
-                await fetch('http://localhost:3000/api/attendance', { 
+                await fetch('/api/attendance', { 
                     method: 'POST', headers: {'Content-Type': 'application/json'}, 
                     body: JSON.stringify({ ten_hoat_dong: inputs[0].value, thoi_gian: thoiGianRaw, ban_kinh: inputs[2].value, vi_do: inputs[3].value, kinh_do: inputs[4].value }) 
                 });

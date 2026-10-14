@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script src="/frontend/js/guard.js" data-roles="ADMIN,BCN"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Kế hoạch & Sự kiện - CLB IP</title>
@@ -433,10 +434,10 @@
 
         async function loadInitData() {
             try {
-                const resMem = await fetch('http://localhost:3000/api/members');
+                const resMem = await fetch('/api/members');
                 if (resMem.ok) allMembers = await resMem.json();
                 
-                const resBcn = await fetch('http://localhost:3000/api/board');
+                const resBcn = await fetch('/api/board');
                 if (resBcn.ok) allBCN = await resBcn.json();
             } catch(e) {}
             await loadPlans();
@@ -462,7 +463,7 @@
 
         async function loadPlans() {
             try {
-                const res = await fetch('http://localhost:3000/api/plans');
+                const res = await fetch('/api/plans');
                 if (res.ok) { 
                     globalPlans = await res.json(); renderPlanTable(); updateStats(); populateMediaPlanSelect(); 
                 } else throw new Error();
@@ -527,7 +528,7 @@
 
         async function deletePlan(id) {
             if(confirm("Xóa kế hoạch sẽ XÓA TOÀN BỘ dữ liệu nội dung, phân công, checklist, kinh phí liên quan. Tiếp tục?")) {
-                await fetch(`http://localhost:3000/api/plans/${id}`, { method: 'DELETE' }); loadPlans();
+                await fetch(`/api/plans/${id}`, { method: 'DELETE' }); loadPlans();
             }
         }
 
@@ -700,7 +701,7 @@
 
             const editId = document.getElementById('edit_plan_id').value;
             try {
-                await fetch(`http://localhost:3000/api/plans${editId ? '/'+editId : ''}`, { method: editId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                await fetch(`/api/plans${editId ? '/'+editId : ''}`, { method: editId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 showCustomToast('Hoàn tất!', 'Dữ liệu kế hoạch đã được lưu lại.');
                 switchTab('tab-overview');
             } catch (error) { alert("Lỗi kết nối máy chủ"); }
@@ -725,7 +726,7 @@
 
         async function loadMedia() {
             try {
-                const res = await fetch('http://localhost:3000/api/communications');
+                const res = await fetch('/api/communications');
                 if (res.ok) { globalMedia = await res.json(); renderMediaTable(); }
             } catch (e) {}
         }
@@ -822,11 +823,11 @@
             };
             
             const id = document.getElementById('edit_media_id').value;
-            await fetch(`http://localhost:3000/api/communications${id ? '/'+id : ''}`, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            await fetch(`/api/communications${id ? '/'+id : ''}`, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             document.getElementById('modalMedia').style.display = 'none'; showCustomToast('Hoàn tất!', 'Dữ liệu truyền thông đã được lưu.'); loadMedia();
         }
 
-        async function deleteMedia(id) { if(confirm("Xóa bài truyền thông này?")) { await fetch(`http://localhost:3000/api/communications/${id}`, { method: 'DELETE' }); loadMedia(); } }
+        async function deleteMedia(id) { if(confirm("Xóa bài truyền thông này?")) { await fetch(`/api/communications/${id}`, { method: 'DELETE' }); loadMedia(); } }
 
         window.onload = loadInitData;
     </script>

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script src="/frontend/js/guard.js" data-roles="ADMIN,BCN"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trang Chủ - Quản trị CLB IP</title>
@@ -346,7 +347,7 @@
         // Load Thống kê chung & Kiểm tra cảnh báo Quỹ
         async function loadDashboard() {
             try {
-                const response = await fetch('http://localhost:3000/api/dashboard');
+                const response = await fetch('/api/dashboard');
                 const data = await response.json();
                 document.getElementById('tong_tv').innerText = data.tongThanhVien;
                 document.getElementById('so_du').innerText = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(data.soDuQuy);
@@ -363,7 +364,7 @@
         // Tải Dữ Liệu Biểu Đồ
         async function loadCharts() {
             try {
-                const res = await fetch('http://localhost:3000/api/analytics');
+                const res = await fetch('/api/analytics');
                 const data = await res.json();
                 
                 new Chart(document.getElementById('genderChart'), {
@@ -413,7 +414,7 @@
 
         async function loadPosts() {
             try {
-                const response = await fetch('http://localhost:3000/api/posts');
+                const response = await fetch('/api/posts');
                 const data = await response.json();
                 const feed = document.getElementById('newsFeed');
                 feed.innerHTML = '';
@@ -422,10 +423,10 @@
                     let attachmentHTML = '';
                     if (post.tep_url) {
                         if (post.tep_url.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null) {
-                            attachmentHTML = `<img src="http://localhost:3000${post.tep_url}" class="post-image" alt="Hình ảnh đính kèm">`;
+                            attachmentHTML = `<img src="${post.tep_url}" class="post-image" alt="Hình ảnh đính kèm">`;
                         } else {
                             const fileName = post.tep_url.split('/').pop();
-                            attachmentHTML = `<br><a href="http://localhost:3000${post.tep_url}" target="_blank" class="file-download-link"><i class="fas fa-file-download"></i> Tải xuống: ${fileName}</a>`;
+                            attachmentHTML = `<br><a href="${post.tep_url}" target="_blank" class="file-download-link"><i class="fas fa-file-download"></i> Tải xuống: ${fileName}</a>`;
                         }
                     }
                     
@@ -463,7 +464,7 @@
 
         async function togglePin(id) {
             try {
-                await fetch(`http://localhost:3000/api/posts/${id}/pin`, { method: 'PATCH' });
+                await fetch(`/api/posts/${id}/pin`, { method: 'PATCH' });
                 loadPosts();
             } catch (e) { alert("Lỗi khi ghim bài!"); }
         }
@@ -483,7 +484,7 @@
             }
 
             try {
-                await fetch('http://localhost:3000/api/posts', { method: 'POST', body: formData });
+                await fetch('/api/posts', { method: 'POST', body: formData });
                 document.getElementById('postForm').reset();
                 document.getElementById('fileNameDisplay').innerText = '';
                 loadPosts(); 
@@ -497,7 +498,7 @@
             const newContent = await requestEditContent(oldContent);
             if (newContent && newContent.trim() !== "" && newContent !== oldContent) {
                 try {
-                    const res = await fetch(`http://localhost:3000/api/posts/${id}`, { 
+                    const res = await fetch(`/api/posts/${id}`, { 
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ noi_dung: newContent.trim(), nguoi_thao_tac: bcnMember })
@@ -514,7 +515,7 @@
             
             if (confirm(`Bạn xác nhận xóa thông báo này? Hành động này sẽ được ghi vào lịch sử.`)) {
                 try {
-                    const res = await fetch(`http://localhost:3000/api/posts/${id}?nguoi_thao_tac=${encodeURIComponent(bcnMember)}`, { 
+                    const res = await fetch(`/api/posts/${id}?nguoi_thao_tac=${encodeURIComponent(bcnMember)}`, { 
                         method: 'DELETE' 
                     });
                     if(res.ok) loadPosts();
@@ -536,7 +537,7 @@
             const tbody = document.getElementById('historyTableBody');
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Đang tải dữ liệu...</td></tr>';
             try {
-                const response = await fetch('http://localhost:3000/api/posts/history');
+                const response = await fetch('/api/posts/history');
                 const historyData = await response.json();
                 tbody.innerHTML = '';
                 
@@ -571,7 +572,7 @@
             const box = document.getElementById('suggestionList');
             box.innerHTML = '<div style="padding: 20px; text-align: center;">Đang tải dữ liệu...</div>';
             try {
-                const res = await fetch('http://localhost:3000/api/suggestions');
+                const res = await fetch('/api/suggestions');
                 const data = await res.json();
                 if(data.length === 0) {
                     box.innerHTML = '<div style="padding: 20px; text-align: center; color: gray;">Chưa có góp ý nào từ thành viên.</div>';

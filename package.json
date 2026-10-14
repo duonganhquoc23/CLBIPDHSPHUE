@@ -1,19 +1,25 @@
 {
-  "name": "wip",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "clbipdhsphue",
+  "version": "2.0.0",
+  "description": "Hệ thống quản lý CLB IP ĐHSP Huế",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^7.4.0",
+    "jsonwebtoken": "^9.0.2",
     "multer": "^2.4.0",
     "mysql2": "^3.24.4"
   }

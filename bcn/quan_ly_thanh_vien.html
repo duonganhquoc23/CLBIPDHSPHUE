@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script src="/frontend/js/guard.js" data-roles="ADMIN,BCN"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Thành viên - CLB IP</title>
@@ -227,7 +228,7 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000/api/members';
+        const API_URL = '/api/members';
         let allMembers = [];
         let importedValidData = [];
         let currentEditId = null; 
@@ -364,13 +365,13 @@
 
             try {
                 // Fetch dữ liệu Ban Chủ Nhiệm
-                const resBoard = await fetch('http://localhost:3000/api/board');
+                const resBoard = await fetch('/api/board');
                 const boardData = await resBoard.json();
                 const bcnRole = boardData.find(b => parseInt(b.thanh_vien_id) === id);
                 document.getElementById('sumRole').innerText = bcnRole ? `${bcnRole.chuc_vu} - Ban ${bcnRole.ban_phu_trach}` : "Thành viên ban thường";
 
                 // Fetch dữ liệu Điểm danh
-                const resAtt = await fetch('http://localhost:3000/api/attendance');
+                const resAtt = await fetch('/api/attendance');
                 document.getElementById('sumAbsence').innerText = "Đang cập nhật (Cần đồng bộ API)";
             } catch (error) {
                 console.error(error);

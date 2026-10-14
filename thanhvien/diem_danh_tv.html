@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script src="/frontend/js/guard.js" data-roles="ADMIN,BCN,MEMBER"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Điểm Danh - CLB IP</title>
@@ -212,7 +213,7 @@
     </div>
 
     <script>
-        const API_URL_BASE = 'http://localhost:3000/api';
+        const API_URL_BASE = '/api';
         let activeSessions = [];
         let selectedSession = null;
 
